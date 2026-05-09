@@ -256,4 +256,20 @@ $('submitBtn').addEventListener('click', () => {
     console.log(error);
   });
 
+  document.addEventListener("DOMContentLoaded", () => {
+
+  const signupBtn = document.querySelector(".signup");
+
+  if (!signupBtn) {
+    console.log("signup element gak ketemu, cek HTML lu.");
+    return;
+  }
+
+  signupBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.location.href = "../Registrasi/index.html";
+  });
+
+});
+
 });

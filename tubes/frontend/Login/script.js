@@ -58,6 +58,18 @@ async function handleLogin() {
     setLoading(false);
 }
 
+document.querySelector(".forgot-password")
+.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.location.href = "../Resetpw/index.html";
+});
+
+document.querySelector(".signup-link")
+.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.location.href = "../Registrasi/index.html";
+});
+
 // tombol login
 signInBtn.addEventListener("click", handleLogin);
 
