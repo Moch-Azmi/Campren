@@ -24,7 +24,7 @@ function login() {
     .then(data => {
         if (data === "registered") {
             // PINDAH KE DASHBOARD
-            window.location.href = "../Dashboard/index.html";
+            window.location.href = "tubes/frontend/Dashboard/index.html";
         } else {
             alert("Login gagal");
         }
@@ -206,8 +206,6 @@ googleSignInBtn.addEventListener('click', handleGoogleSignIn);
 
 document.querySelector('.forgot-password').addEventListener('click', handleForgotPassword);
 document.querySelector('.signup-link').addEventListener('click', handleSignUp);
-
-window.location.href = "../Dashboard/index.html";
 
 window.addEventListener('load', () => {
     emailInput.focus();
