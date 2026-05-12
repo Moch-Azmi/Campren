@@ -43,7 +43,7 @@ async function handleLogin() {
 
         const clean = result.trim().toLowerCase();
 
-        if (clean.includes("registered")) {
+        if (clean === "registered") {
             alert("Login sukses");
             window.location.href = "../Dashboard/index.html";
         } else {
