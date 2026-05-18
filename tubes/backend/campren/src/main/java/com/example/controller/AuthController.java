@@ -2,17 +2,23 @@ package com.example.controller;
 
 import com.example.model.Campaign;
 import com.example.model.Pelanggan;
-import com.example.model.PerformanceMetrics;
 import com.example.model.Users;
-import com.example.repository.PelangganRepository;
-import com.example.repository.PerformanceMetricsRepository;
-import com.example.repository.UsersRepository;
+import com.example.model.PerformanceMetrics;
 import com.example.repository.CampaignRepository;
-import java.util.List;
+
+import com.example.repository.PelangganRepository;
+import com.example.repository.UsersRepository;
+import com.example.repository.PerformanceMetricsRepository;
+import java.util.HashMap;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api")
@@ -24,187 +30,224 @@ public class AuthController {
 
     @Autowired
     private UsersRepository usersRepository;
-    
+
+    @Autowired
+    private CampaignRepository campaignsRepository;
+
     @Autowired
     private PerformanceMetricsRepository performanceRepository;
-    
-    @Autowired
-    private CampaignRepository campaignRepository;
+
+
+    // ==================================================
+    // REGISTER
+    // POST /api/register
+    // ==================================================
+    @PostMapping("/register")
+    public String register(@RequestBody Pelanggan req) {
+
+        try {
+
+            if (userRepository.existsByEmail(req.getEmail())) {
+                return "email exists";
+            }
+
+            userRepository.save(req);
+
+            Users user = new Users();
+            user.setRoleId(1);
+            user.setEmail(req.getEmail());
+            user.setNama(req.getNama());
+
+            usersRepository.save(user);
+
+            return "registered";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "failed";
+        }
+    }
+
+
+    // ==================================================
     // LOGIN
+    // POST /api/login
+    // ==================================================
     @PostMapping("/login")
-    public String login(@RequestBody Pelanggan loginRequest) {
+    public ResponseEntity<?> login(@RequestBody Pelanggan req) {
 
-        System.out.println("Input email: " + loginRequest.getEmail());
-        System.out.println("Input password: " + loginRequest.getPassword());
+    Optional<Pelanggan> pelanggan =
+            userRepository.findByEmail(req.getEmail());
 
-        Optional<Pelanggan> user =
-                userRepository.findByEmail(loginRequest.getEmail());
+    if (pelanggan.isPresent() &&
+        pelanggan.get().getPassword().equals(req.getPassword())) {
+
+        Optional<Users> user =
+                usersRepository.findByEmail(req.getEmail());
 
         if (user.isPresent()) {
-            System.out.println("Database password: " + user.get().getPassword());
-        } else {
-            System.out.println("User not found in database.");
-        }
 
-        if (user.isPresent() &&
-            user.get().getPassword().equals(loginRequest.getPassword())) {
-            return "registered";
-        }
+            Map<String, Object> response = new HashMap<>();
 
-        return "not registered";
+            response.put("status", "registered");
+            response.put("userId", user.get().getUserId());
+            response.put("email", user.get().getEmail());
+            response.put("nama", user.get().getNama());
+
+            return ResponseEntity.ok(response);
+        }
     }
 
-    // REGISTER
-    @PostMapping("/register")
-public String register(@RequestBody Pelanggan req) {
-    try {
-
-        if (userRepository.existsByEmail(req.getEmail())) {
-            return "email exists";
-        }
-
-        // save pelanggan
-        userRepository.save(req);
-
-        // save users
-        Users user = new Users();
-        user.setRoleId(1);
-        user.setEmail(req.getEmail());
-        user.setNama(req.getNama());
-
-        usersRepository.save(user);
-
-        return "registered";
-
-    } catch (Exception e) {
-        return "failed";
-    }
-}
-
-    @PostMapping("/change-password")
-public String changePassword(@RequestBody Pelanggan request) {
-
-    System.out.println("CHANGE PASSWORD HIT");
-    System.out.println("Email: " + request.getEmail());
-
-    Optional<Pelanggan> user = userRepository.findByEmail(request.getEmail());
-
-    if (user.isPresent()) {
-
-        Pelanggan pelanggan = user.get();
-        pelanggan.setPassword(request.getPassword());
-
-        userRepository.save(pelanggan);
-
-        return "success";
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(Map.of("status", "not registered"));
     }
 
-    return "email not found";
-}
-@PostMapping("/roas")
-public String getMetrics(@RequestBody PerformanceMetrics req) {
 
-    try {
+    // ==================================================
+    // CHANGE PASSWORD
+    // PUT /api/change-password
+    // ==================================================
+    @PutMapping("/change-password")
+    public String changePassword(@RequestBody Pelanggan req) {
 
-        List<PerformanceMetrics> data =
-            performanceRepository.findByCampaignId(req.getCampaignId());
+        Optional<Pelanggan> user =
+                userRepository.findByEmail(req.getEmail());
 
-        if (data.isEmpty()) {
-            return "campaign not found";
+        if (user.isPresent()) {
+
+            Pelanggan pelanggan = user.get();
+            pelanggan.setPassword(req.getPassword());
+
+            userRepository.save(pelanggan);
+
+            return "success";
         }
 
-        long totalRevenue = 0;
-        long totalCost = 0;
-        long totalClicks = 0;
-        long totalImpression = 0;
-
-        for (PerformanceMetrics p : data) {
-            totalRevenue += p.getRevenue();
-            totalCost += p.getCost();
-            totalClicks += p.getClicks();
-            totalImpression += p.getImpression();
-        }
-
-        double roas = 0;
-        double ctr = 0;
-        double cpc = 0;
-
-        if (totalCost > 0) {
-            roas = (double) totalRevenue / totalCost;
-        }
-
-        if (totalImpression > 0) {
-            ctr = ((double) totalClicks / totalImpression) * 100;
-        }
-
-        if (totalClicks > 0) {
-            cpc = (double) totalCost / totalClicks;
-        }
-
-        return "Return on Ad Spend = " + String.format("%.2f", roas)
-             + " | Click-Trough Rate = " + String.format("%.2f", ctr) + "%"
-             + " | Cost Per Click = " + String.format("%.2f", cpc);
-
-    } catch (Exception e) {
-        return "failed";
+        return "email not found";
     }
-}
 
-@PostMapping("/performancereport")
-public String performanceReport(@RequestBody PerformanceMetrics req) {
 
-    try {
+    // ==================================================
+    // CREATE CAMPAIGN
+    // POST /api/campaign
+    // ==================================================
+    @PostMapping("/campaign")
+    public String createCampaign(@RequestBody Campaign req) {
 
-        Integer campaignId = req.getCampaignId();
-
-        // ambil data campaign
-        Optional<Campaign> campaignData =
-                campaignRepository.findById(campaignId);
-
-        if (!campaignData.isPresent()) {
-            return "campaign not found";
+        try {
+            campaignsRepository.save(req);
+            return "campaign created";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "failed";
         }
-
-        // ambil data metrics
-        List<PerformanceMetrics> metrics =
-                performanceRepository.findByCampaignId(campaignId);
-
-        StringBuilder result = new StringBuilder();
-
-        // ===== CAMPAIGN DATA =====
-        result.append("=== CAMPAIGN DATA ===\n");
-        result.append("Campaign ID : ")
-              .append(campaignData.get().getCampaignId()).append("\n");
-        result.append("User ID     : ")
-              .append(campaignData.get().getUserId()).append("\n");
-        result.append("Platform ID : ")
-              .append(campaignData.get().getPlatformId()).append("\n");
-        result.append("Campaign Name : ")
-              .append(campaignData.get().getNamaCampaign()).append("\n\n");
-
-        // ===== PERFORMANCE DATA =====
-        result.append("=== PERFORMANCE METRICS ===\n");
-
-        if (metrics.isEmpty()) {
-            result.append("No metrics data found.");
-            return result.toString();
-        }
-
-        for (PerformanceMetrics p : metrics) {
-
-            result.append("Date        : ").append(p.getTanggal()).append("\n");
-            result.append("Impression  : ").append(p.getImpression()).append("\n");
-            result.append("Clicks      : ").append(p.getClicks()).append("\n");
-            result.append("Cost        : ").append(p.getCost()).append("\n");
-            result.append("Conversions : ").append(p.getConversions()).append("\n");
-            result.append("Revenue     : ").append(p.getRevenue()).append("\n");
-            result.append("--------------------------\n");
-        }
-
-        return result.toString();
-
-    } catch (Exception e) {
-        return "failed";
     }
-}
+
+
+    // ==================================================
+    // GET ROAS + CTR + CPC
+    // GET /api/roas/{id}
+    // ==================================================
+    @GetMapping("/roas/{id}")
+    public String getMetrics(@PathVariable Integer id) {
+
+        try {
+
+            List<PerformanceMetrics> data =
+                    performanceRepository.findByCampaignId(id);
+
+            if (data.isEmpty()) {
+                return "campaign not found";
+            }
+
+            long revenue = 0;
+            long cost = 0;
+            long clicks = 0;
+            long impression = 0;
+
+            for (PerformanceMetrics p : data) {
+                revenue += p.getRevenue();
+                cost += p.getCost();
+                clicks += p.getClicks();
+                impression += p.getImpression();
+            }
+
+            double roas = cost > 0 ? (double) revenue / cost : 0;
+            double ctr = impression > 0 ? ((double) clicks / impression) * 100 : 0;
+            double cpc = clicks > 0 ? (double) cost / clicks : 0;
+
+            String json =
+            "{"
+            + "\"roas\": " + String.format("%.2f", roas) + ","
+            + "\"ctr\": " + String.format("%.2f", ctr) + ","
+            + "\"cpc\": " + String.format("%.2f", cpc)
+            + "}";
+
+return json;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "failed";
+        }
+    }
+
+
+    // ==================================================
+    // PERFORMANCE REPORT
+    // GET /api/PerformanceReport/{id}
+    // ==================================================
+    @GetMapping("/PerformanceReport/{id}")
+    public String performanceReport(@PathVariable Integer id) {
+
+        try {
+
+            Optional<Campaign> campaign =
+                    campaignsRepository.findById(id);
+
+            if (!campaign.isPresent()) {
+                return "campaign not found";
+            }
+
+            List<PerformanceMetrics> metrics =
+                    performanceRepository.findByCampaignId(id);
+
+            String json =
+            "{"
+            + "\"campaign\": {"
+            + "\"campaignId\": " + campaign.get().getCampaignId() + ","
+            + "\"userId\": " + campaign.get().getUserId() + ","
+            + "\"platformId\": " + campaign.get().getPlatformId() + ","
+            + "\"namaCampaign\": \"" + campaign.get().getNamaCampaign() + "\""
+            + "},"
+
+            + "\"performance\": [";
+
+            for (int i = 0; i < metrics.size(); i++) {
+
+                PerformanceMetrics p = metrics.get(i);
+
+                json +=
+                "{"
+                + "\"tanggal\": \"" + p.getTanggal() + "\","
+                + "\"impression\": " + p.getImpression() + ","
+                + "\"clicks\": " + p.getClicks() + ","
+                + "\"cost\": " + p.getCost() + ","
+                + "\"conversions\": " + p.getConversions() + ","
+                + "\"revenue\": " + p.getRevenue()
+                + "}";
+
+                if (i < metrics.size() - 1) {
+                    json += ",";
+                }
+            }
+
+            json += "]}";
+
+            return json;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "failed";
+        }
+    }
 }
