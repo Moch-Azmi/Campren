@@ -1,62 +1,115 @@
-async function handleLogin() {
+document.addEventListener("DOMContentLoaded", () => {
 
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
+    const loginForm = document.getElementById("loginForm");
 
-    if (!email || !password) {
-        alert("Email / Password wajib diisi");
-        return;
+    const signInBtn = document.getElementById("signInBtn");
+
+    const emailInput = document.getElementById("email");
+
+    const passwordInput = document.getElementById("password");
+
+    function setLoading(state) {
+
+        signInBtn.disabled = state;
+
+        signInBtn.textContent =
+            state ? "Loading..." : "Sign In";
     }
 
-    setLoading(true);
+    async function handleLogin(e) {
 
-    try {
+        e.preventDefault();
 
-        const res = await fetch(
-            "https://camprentelu.azurewebsites.net/api/login",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    email,
-                    password
-                })
-            }
-        );
+        const email = emailInput.value.trim();
 
-        const result = await res.json();
+        const password = passwordInput.value.trim();
 
-        console.log("LOGIN RESULT:", result);
+        if (!email || !password) {
 
-        // LOGIN BERHASIL
-        if (res.ok && result.status === "registered") {
+            alert("Email / Password wajib diisi");
 
-            // simpan data user
-            localStorage.setItem(
-                "user",
-                JSON.stringify(result)
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+
+            const res = await fetch(
+                "https://camprentelu.azurewebsites.net/api/login",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        email,
+                        password
+                    })
+                }
             );
 
-            alert("Login berhasil");
+            const result = await res.json();
 
-            window.location.href =
-                "../Dashboard/index.html";
+            console.log("LOGIN:", result);
 
-        } else {
+            if (
+                res.ok &&
+                result.status === "registered"
+            ) {
 
-            alert("Email / password salah");
+                localStorage.setItem(
+                    "user",
+                    JSON.stringify(result)
+                );
+
+                alert("Login berhasil");
+
+                window.location.href =
+                    "../Dashboard/index.html";
+
+            } else {
+
+                alert("Email / Password salah");
+
+            }
+
+        } catch (err) {
+
+            console.error(err);
+
+            alert("Server error");
 
         }
 
-    } catch (err) {
-
-        console.error(err);
-
-        alert("Server error");
-
+        setLoading(false);
     }
 
-    setLoading(false);
-}
+    loginForm.addEventListener(
+        "submit",
+        handleLogin
+    );
+
+    document
+    .querySelector(".forgot-password")
+    .addEventListener("click", (e) => {
+
+        e.preventDefault();
+
+        window.location.href =
+            "../Resetpw/index.html";
+    });
+
+    document
+    .querySelector(".signup-link")
+    .addEventListener("click", (e) => {
+
+        e.preventDefault();
+
+        window.location.href =
+            "../Registrasi/index.html";
+    });
+
+});

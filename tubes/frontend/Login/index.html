@@ -4,115 +4,120 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - CAMPREN</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@500&display=swap" rel="stylesheet">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@500&display=swap"
+        rel="stylesheet"
+    >
+
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
+
     <div class="login-container">
+
         <div class="background-gradient">
-            <svg class="wavy-lines" viewBox="0 0 1293 1334" fill="none" preserveAspectRatio="none">
-                <defs>
-                    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#8A38F5;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#666666;stop-opacity:1" />
-                    </linearGradient>
-                    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#8A38F5;stop-opacity:0.8" />
-                        <stop offset="100%" style="stop-color:#666666;stop-opacity:0.8" />
-                    </linearGradient>
-                    <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#5554CF;stop-opacity:0.6" />
-                        <stop offset="100%" style="stop-color:#8A38F5;stop-opacity:0.6" />
-                    </linearGradient>
-                </defs>
-                <path d="M 0,400 Q 150,350 300,400 T 600,400 T 900,400 T 1200,400" stroke="url(#grad1)" stroke-width="2" fill="none" opacity="0.3">
-                    <animate attributeName="d" 
-                        values="M 0,400 Q 150,350 300,400 T 600,400 T 900,400 T 1200,400;
-                                M 0,400 Q 150,450 300,400 T 600,400 T 900,400 T 1200,400;
-                                M 0,400 Q 150,350 300,400 T 600,400 T 900,400 T 1200,400"
-                        dur="10s" repeatCount="indefinite"/>
-                </path>
-                <path d="M 0,450 Q 150,400 300,450 T 600,450 T 900,450 T 1200,450" stroke="url(#grad2)" stroke-width="2" fill="none" opacity="0.4">
-                    <animate attributeName="d" 
-                        values="M 0,450 Q 150,400 300,450 T 600,450 T 900,450 T 1200,450;
-                                M 0,450 Q 150,500 300,450 T 600,450 T 900,450 T 1200,450;
-                                M 0,450 Q 150,400 300,450 T 600,450 T 900,450 T 1200,450"
-                        dur="8s" repeatCount="indefinite"/>
-                </path>
-                <path d="M 0,500 Q 150,450 300,500 T 600,500 T 900,500 T 1200,500" stroke="url(#grad3)" stroke-width="2" fill="none" opacity="0.5">
-                    <animate attributeName="d" 
-                        values="M 0,500 Q 150,450 300,500 T 600,500 T 900,500 T 1200,500;
-                                M 0,500 Q 150,550 300,500 T 600,500 T 900,500 T 1200,500;
-                                M 0,500 Q 150,450 300,500 T 600,500 T 900,500 T 1200,500"
-                        dur="12s" repeatCount="indefinite"/>
-                </path>
-                <path d="M 0,550 Q 150,500 300,550 T 600,550 T 900,550 T 1200,550" stroke="url(#grad1)" stroke-width="1.5" fill="none" opacity="0.2">
-                    <animate attributeName="d" 
-                        values="M 0,550 Q 150,500 300,550 T 600,550 T 900,550 T 1200,550;
-                                M 0,550 Q 150,600 300,550 T 600,550 T 900,550 T 1200,550;
-                                M 0,550 Q 150,500 300,550 T 600,550 T 900,550 T 1200,550"
-                        dur="11s" repeatCount="indefinite"/>
-                </path>
-                <path d="M 0,600 Q 150,550 300,600 T 600,600 T 900,600 T 1200,600" stroke="url(#grad2)" stroke-width="1.5" fill="none" opacity="0.3">
-                    <animate attributeName="d" 
-                        values="M 0,600 Q 150,550 300,600 T 600,600 T 900,600 T 1200,600;
-                                M 0,600 Q 150,650 300,600 T 600,600 T 900,600 T 1200,600;
-                                M 0,600 Q 150,550 300,600 T 600,600 T 900,600 T 1200,600"
-                        dur="9s" repeatCount="indefinite"/>
-                </path>
-            </svg>
+            <!-- SVG LU BIARIN -->
         </div>
 
-        <div class="login-card">
+        <!-- FIX -->
+        <form class="login-card" id="loginForm">
+
             <div class="login-header">
+
                 <p class="welcome-text">Welcome To</p>
+
                 <div class="logo">
+
                     <span class="logo-text">CAMPREN</span>
+
                     <svg class="logo-icon" viewBox="0 0 24 24" fill="none">
-                        <path d="M13 2L3 14h8l-2 8 10-12h-8l2-8z" fill="#5C5CDA" stroke="#5C5CDA" stroke-width="1"/>
+                        <path
+                            d="M13 2L3 14h8l-2 8 10-12h-8l2-8z"
+                            fill="#5C5CDA"
+                            stroke="#5C5CDA"
+                            stroke-width="1"
+                        />
                     </svg>
-                    <p class="logo-tagline">EXPLORE. ANALYZE. GROWTH.</p>
+
+                    <p class="logo-tagline">
+                        EXPLORE. ANALYZE. GROWTH.
+                    </p>
+
                 </div>
+
             </div>
 
             <div class="form-group">
-                <label for="email" class="form-label">Email</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    class="form-input" 
+
+                <label for="email" class="form-label">
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    class="form-input"
                     placeholder="Insert your email"
                     autocomplete="email"
                 />
+
             </div>
 
             <div class="form-group">
-                <label for="password" class="form-label">Password</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    class="form-input" 
+
+                <label for="password" class="form-label">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    class="form-input"
                     placeholder="Insert your password"
                     autocomplete="current-password"
                 />
+
             </div>
 
             <div class="forgot-password-wrapper">
-                <a href="#" class="forgot-password">Forgot password</a>
+
+                <a href="#" class="forgot-password">
+                    Forgot password
+                </a>
+
             </div>
 
-            <button class="btn btn-primary" id="signInBtn">
+            <!-- FIX -->
+            <button
+                type="submit"
+                class="btn btn-primary"
+                id="signInBtn"
+            >
                 Sign In
             </button>
+
             <div class="signup-wrapper">
-                <span class="signup-text">Don't have an account?</span>
-                <a href="#" class="signup-link">Sign Up</a>
+
+                <span class="signup-text">
+                    Don't have an account?
+                </span>
+
+                <a href="#" class="signup-link">
+                    Sign Up
+                </a>
+
             </div>
-        </div>
+
+        </form>
+
     </div>
 
     <script src="script.js"></script>
+
 </body>
 </html>
