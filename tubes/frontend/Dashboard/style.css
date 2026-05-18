@@ -600,3 +600,16 @@ nav { padding: 18px 12px 0; flex: 1; }
   .kpi-grid { grid-template-columns: 1fr; }
   .kpi-donut-card { grid-column: span 1; }
 }
+
+.area-card {
+  height: 420px;
+}
+
+.area-card canvas {
+  width: 100% !important;
+  height: 320px !important;
+}
+
+.chart-card {
+  overflow: hidden;
+}
