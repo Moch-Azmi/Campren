@@ -1,3 +1,16 @@
+document.addEventListener("DOMContentLoaded", () => {
+
+  const signupBtn = document.querySelector(".signup");
+
+  if (!signupBtn) return;
+
+  signupBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.location.href = "../Registrasi/index.html";
+  });
+
+});
+
 /* ══════════════════════════════════════════════════
    WAVE CANVAS BACKGROUND
 ══════════════════════════════════════════════════ */
@@ -216,59 +229,57 @@ $('submitBtn').addEventListener('click', () => {
   btn.disabled = true;
   btn.querySelector('.btn-label').textContent = 'Processing...';
 
-  fetch("http://localhost:8080/api/change-password", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      email: email,
-      password: pwd
-    })
+ fetch("https://camprentelu.azurewebsites.net/api/change-password", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    email: email,
+    password: pwd
   })
-  .then(response => response.text())
-  .then(result => {
+})
+.then(async response => {
 
-    btn.disabled = false;
+  const result = await response.text();
 
-    if (result === "success") {
+  console.log("STATUS:", response.status);
+  console.log("BODY:", result);
 
-      btn.querySelector('.btn-label').textContent = 'Password berhasil diubah ✓';
-      btn.style.background = 'var(--green)';
-      btn.style.color = '#0c0c0f';
+  btn.disabled = false;
 
-    } else if (result === "email not found") {
+  // ✅ EMAIL TIDAK DITEMUKAN
+  if (response.status === 404 || result === "email not found") {
 
-      btn.querySelector('.btn-label').textContent = 'Make a new password';
-      setErr(emailInput, '✗ Email tidak ditemukan', emailHint);
-
-    } else {
-
-      alert("Gagal mengubah password");
-
-    }
-
-  })
-  .catch(error => {
-    btn.disabled = false;
     btn.querySelector('.btn-label').textContent = 'Make a new password';
-    alert("Server error");
-    console.log(error);
-  });
 
-  document.addEventListener("DOMContentLoaded", () => {
+    setErr(emailInput, '✗ Email tidak ditemukan', emailHint);
+    shake(emailInput);
 
-  const signupBtn = document.querySelector(".signup");
-
-  if (!signupBtn) {
-    console.log("signup element gak ketemu, cek HTML lu.");
     return;
   }
 
-  signupBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.location.href = "../Registrasi/index.html";
-  });
+  // ✅ SUCCESS
+  if (result === "success") {
+
+    btn.querySelector('.btn-label').textContent = 'Password berhasil diubah ✓';
+    btn.style.background = 'var(--green)';
+    btn.style.color = '#0c0c0f';
+
+    return;
+  }
+
+  // ❌ FALLBACK ERROR
+  alert("Gagal mengubah password");
+
+})
+.catch(error => {
+
+  btn.disabled = false;
+  btn.querySelector('.btn-label').textContent = 'Make a new password';
+
+  console.log("ERROR:", error);
+  alert("Server error");
 
 });
 

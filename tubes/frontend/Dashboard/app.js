@@ -1,138 +1,179 @@
-/* =====================
-   CAMPREN – app.js (FIXED + FETCH)
-   ===================== */
+const BASE_URL = "https://camprentelu.azurewebsites.net/api";
 
-document.addEventListener('DOMContentLoaded', () => {
+async function loadDashboard() {
 
-  // ── NAV ACTIVE STATE ─────────────────────────
-  const navItems = document.querySelectorAll('.nav-item');
-  navItems.forEach(item => {
-    item.addEventListener('click', () => {
-      navItems.forEach(n => n.classList.remove('active'));
-      item.classList.add('active');
-      document.querySelector('.page-title').textContent =
-        item.dataset.page.charAt(0).toUpperCase() + item.dataset.page.slice(1);
-    });
-  });
+  try {
 
-  // ── PENCAPAIAN TARGET ────────────────────────
-  const targetInput  = document.getElementById('targetRevenue');
-  const pencapaianEl = document.getElementById('pencapaianPct');
+    // USER LOGIN
+    const userId = 3;
 
-  let TOTAL_REVENUE = 85000000;
+    /* =========================
+       GET USER CAMPAIGNS
+    ========================= */
+    const campaignRes = await fetch(
+      `${BASE_URL}/GetUserCampaigns/${userId}`
+    );
 
-  function updatePencapaian() {
-    const target = parseFloat(targetInput.value);
-    if (!target || target <= 0) {
-      pencapaianEl.textContent = '—';
+    if (!campaignRes.ok) {
+      throw new Error("Campaign gagal");
+    }
+
+    const campaigns = await campaignRes.json();
+
+    if (!campaigns.length) {
+      console.log("Campaign kosong");
       return;
     }
-    const pct = ((TOTAL_REVENUE / target) * 100).toFixed(1);
-    pencapaianEl.textContent = pct + '%';
-  }
 
-  targetInput.value = 566666667;
-  updatePencapaian();
-  targetInput.addEventListener('input', updatePencapaian);
+    // campaign pertama
+    const campaignId = campaigns[0].campaignId;
 
-  // ── DONUT CHART ──────────────────────────────
-  const donutCtx = document.getElementById('donutChart').getContext('2d');
+    console.log("Campaign ID:", campaignId);
 
-  new Chart(donutCtx, {
-    type: 'doughnut',
-    data: {
-      labels: ['TikTok', 'Youtube', 'Instagram', 'Tokopedia'],
-      datasets: [{
-        data: [35, 25, 20, 20],
-        backgroundColor: ['#3B82F6', '#F87171', '#FBBF24', '#A78BFA'],
-        borderWidth: 2,
-        borderColor: '#181A22',
-        hoverOffset: 6,
-      }]
-    },
-    options: {
-      cutout: '72%',
-      plugins: { legend: { display: false } }
+    /* =========================
+       GET PERFORMANCE REPORT
+    ========================= */
+    const perfRes = await fetch(
+      `${BASE_URL}/PerformanceReport/${campaignId}`
+    );
+
+    if (!perfRes.ok) {
+      throw new Error("Performance gagal");
     }
-  });
 
-  // ── AREA CHART ───────────────────────────────
-  const areaCtx = document.getElementById('areaChart').getContext('2d');
+    const perfData = await perfRes.json();
 
-  function makeGradient(ctx, c1, c2) {
-    const g = ctx.createLinearGradient(0, 0, 0, 200);
-    g.addColorStop(0, c1);
-    g.addColorStop(1, c2);
-    return g;
-  }
+    console.log(perfData);
 
-  const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul'];
+    /* =========================
+       GET ROAS
+    ========================= */
+    const roasRes = await fetch(
+      `${BASE_URL}/roas/${campaignId}`
+    );
 
-  const revenueData = [2, 3, 5, 7, 12, 18, 25];
-  const spendData   = [1, 2, 3, 4, 7, 11, 16];
-
-  const revGrad  = makeGradient(areaCtx, 'rgba(52,211,153,0.4)', 'rgba(52,211,153,0)');
-  const spendGrad = makeGradient(areaCtx, 'rgba(59,130,246,0.3)', 'rgba(59,130,246,0)');
-
-  window.areaChart = new Chart(areaCtx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Revenue',
-          data: revenueData,
-          borderColor: '#34D399',
-          fill: true,
-          backgroundColor: revGrad,
-          tension: 0.4,
-        },
-        {
-          label: 'Ad Spend',
-          data: spendData,
-          borderColor: '#3B82F6',
-          fill: true,
-          backgroundColor: spendGrad,
-          tension: 0.4,
-        }
-      ]
+    if (!roasRes.ok) {
+      throw new Error("ROAS gagal");
     }
-  });
 
-  // ── FETCH DASHBOARD DATA ─────────────────────
-  async function loadDashboardData() {
-    try {
-      const res = await fetch("https://camprentelu.azurewebsites.net/api/dashboard");
+    const roasData = await roasRes.json();
 
-      if (!res.ok) throw new Error("Fetch gagal");
+    console.log(roasData);
 
-      const data = await res.json();
+    /* =========================
+       PROCESS DATA
+    ========================= */
 
-      // update KPI
-      TOTAL_REVENUE = data.totalRevenue;
+    const performance = perfData.performance;
 
-      targetInput.value = data.targetRevenue;
-      updatePencapaian();
+    let totalRevenue = 0;
+    let totalSpend = 0;
 
-      // update chart
-      areaChart.data.datasets[0].data = data.revenue;
-      areaChart.data.datasets[1].data = data.spend;
-      areaChart.update();
+    const labels = [];
+    const revenueData = [];
+    const spendData = [];
 
-    } catch (err) {
-      console.error("Dashboard fetch error:", err);
-    }
+    performance.forEach(item => {
+
+      totalRevenue += item.revenue;
+      totalSpend += item.cost;
+
+      labels.push(item.tanggal);
+      revenueData.push(item.revenue);
+      spendData.push(item.cost);
+
+    });
+
+    /* =========================
+       UPDATE KPI
+    ========================= */
+
+    document.querySelector(".revenue-val").textContent =
+      `Rp ${totalRevenue.toLocaleString("id-ID")}`;
+
+    document.querySelector(".spend-val").textContent =
+      `Rp ${totalSpend.toLocaleString("id-ID")}`;
+
+    document.querySelector(".roas-val").textContent =
+      `${roasData.roas}x`;
+
+    /* =========================
+       UPDATE CHART
+    ========================= */
+
+    areaChart.data.labels = labels;
+
+    areaChart.data.datasets[0].data = revenueData;
+    areaChart.data.datasets[1].data = spendData;
+
+    areaChart.update();
+
+    /* =========================
+       UPDATE DONUT TEXT
+    ========================= */
+
+    document.querySelector(".donut-center-val").textContent =
+      `${roasData.roas}x`;
+
+    /* =========================
+       UPDATE TABLE
+    ========================= */
+
+    const tbody = document.querySelector(
+      ".campaign-table tbody"
+    );
+
+    tbody.innerHTML = "";
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>
+        <div class="camp-name">
+          ${perfData.campaign.namaCampaign}
+        </div>
+
+        <div class="camp-sub">
+          Campaign ID : ${campaignId}
+        </div>
+      </td>
+
+      <td>
+        <span class="channel-badge tiktok-badge">
+          Platform ${perfData.campaign.platformId}
+        </span>
+      </td>
+
+      <td>
+        Rp ${totalSpend.toLocaleString("id-ID")}
+      </td>
+
+      <td>
+        Rp ${(totalRevenue * 2).toLocaleString("id-ID")}
+      </td>
+
+      <td class="revenue-green">
+        Rp ${totalRevenue.toLocaleString("id-ID")}
+      </td>
+
+      <td>
+        4.0x
+      </td>
+
+      <td class="roas-orange">
+        ${roasData.roas}x
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert("API Error");
+
   }
+}
 
-  loadDashboardData();
-
-  // ── PROGRESS BAR ANIMATION ───────────────────
-  const bars = document.querySelectorAll('.troas-bar, .roas-progress-fill');
-  const widths = [...bars].map(b => b.style.width);
-  bars.forEach(b => b.style.width = '0');
-
-  setTimeout(() => {
-    bars.forEach((b, i) => b.style.width = widths[i]);
-  }, 300);
-
-});
+loadDashboard();

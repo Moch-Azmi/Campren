@@ -1,14 +1,3 @@
-document.addEventListener("DOMContentLoaded", () => {
-
-const signInBtn = document.getElementById("signInBtn");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-
-function setLoading(state) {
-    signInBtn.disabled = state;
-    signInBtn.textContent = state ? "Loading..." : "Sign In";
-}
-
 async function handleLogin() {
 
     const email = emailInput.value.trim();
@@ -22,60 +11,52 @@ async function handleLogin() {
     setLoading(true);
 
     try {
-        const res = await fetch("https://camprentelu.azurewebsites.net/api/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                email,
-                password
-            })
-        });
 
-        if (!res.ok) {
-            throw new Error("HTTP ERROR " + res.status);
-        }
+        const res = await fetch(
+            "https://camprentelu.azurewebsites.net/api/login",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email,
+                    password
+                })
+            }
+        );
 
-        const result = await res.text();
+        const result = await res.json();
 
-        console.log("Response backend:", result);
+        console.log("LOGIN RESULT:", result);
 
-        const clean = result.trim().toLowerCase();
+        // LOGIN BERHASIL
+        if (res.ok && result.status === "registered") {
 
-        if (clean === "registered") {
-            alert("Login sukses");
-            window.location.href = "../Dashboard/index.html";
+            // simpan data user
+            localStorage.setItem(
+                "user",
+                JSON.stringify(result)
+            );
+
+            alert("Login berhasil");
+
+            window.location.href =
+                "../Dashboard/index.html";
+
         } else {
-            alert("Login gagal / user tidak terdaftar");
+
+            alert("Email / password salah");
+
         }
 
     } catch (err) {
+
         console.error(err);
-        alert("Server error / endpoint salah / 404");
+
+        alert("Server error");
+
     }
 
     setLoading(false);
 }
-
-document.querySelector(".forgot-password")
-.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.location.href = "../Resetpw/index.html";
-});
-
-document.querySelector(".signup-link")
-.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.location.href = "../Registrasi/index.html";
-});
-
-// tombol login
-signInBtn.addEventListener("click", handleLogin);
-
-// enter key support
-passwordInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") handleLogin();
-});
-
-});
