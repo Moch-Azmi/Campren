@@ -710,3 +710,33 @@ body {
 
   transition: 0.2s ease;
 }
+
+.user-avatar {
+  border: none;
+  outline: none;
+  background: var(--bg-card);
+
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--text-primary); /* INI YANG BIKIN ICON JADI TERANG */
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.user-avatar:hover {
+  transform: translateY(-1px);
+  background: #232633;
+  color: #ffffff;
+}
