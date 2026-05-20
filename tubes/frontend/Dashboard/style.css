@@ -69,48 +69,47 @@ body {
   padding-bottom: 16px;
 }
 
-.brand {
+
+.sidebar-logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 20px 18px 24px;
+  padding: 20px 18px 18px;
   border-bottom: 1px solid var(--border);
 }
 
-.brand-icon { flex-shrink: 0; }
-
-.brand-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.brand-name {
-  font-size: 15px;
+.logo-name {
+  font-family: var(--font-mono);
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 1px;
   color: var(--text-primary);
 }
 
-.brand-tagline {
+.logo-tagline {
   font-size: 8px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.8px;
   color: var(--text-muted);
-  font-weight: 500;
+  margin-top: 2px;
 }
 
-nav { padding: 18px 12px 0; flex: 1; }
-
-.nav-section-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  color: var(--text-muted);
-  padding: 0 8px;
-  margin-bottom: 6px;
+.sidebar-nav {
+  padding: 16px 10px;
+  flex: 1;
 }
 
-.nav-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.nav-group-label {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  padding: 12px 8px 6px;
+  font-family: var(--font-mono);
+}
+
+.nav-item {
+  text-decoration: none;
+}
+
 
 .nav-item {
   display: flex;
@@ -219,6 +218,19 @@ nav { padding: 18px 12px 0; flex: 1; }
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-nav {
+  flex: 1;
+}
+
+.target-panel {
+  margin-top: auto;
 }
 
 /* TOPBAR */
@@ -601,8 +613,8 @@ nav { padding: 18px 12px 0; flex: 1; }
   .kpi-donut-card { grid-column: span 1; }
 }
 
-.area-card {
-  height: 420px;
+.area-card{
+  height:360px;
 }
 
 .area-card canvas {
@@ -612,4 +624,89 @@ nav { padding: 18px 12px 0; flex: 1; }
 
 .chart-card {
   overflow: hidden;
+}
+
+.campaign-table tbody tr:nth-child(even){
+  background:rgba(255,255,255,0.02);
+}
+
+.campaign-table tbody tr:hover td{
+  background:rgba(255,255,255,0.04);
+}
+
+.table-card{
+  padding:0;
+  overflow:hidden;
+}
+
+.table-card .card-title{
+  padding:20px 20px 0;
+}
+
+.campaign-table td{
+  padding:20px 16px;
+}
+
+.donut-legend li{
+  padding:2px 0;
+}
+
+.legend-val{
+  min-width:50px;
+  text-align:right;
+}
+
+.sidebar-action {
+  margin: 20px 0;
+}
+
+.input-data-btn {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 14px;
+
+  background: linear-gradient(
+    135deg,
+    #3B82F6,
+    #6D28D9
+  );
+
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.input-data-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.92;
+}
+
+.input-data-btn:active {
+  transform: scale(0.98);
+}
+
+.input-data-btn {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 14px;
+
+  margin-top: 28px;
+
+  background: linear-gradient(
+    135deg,
+    #3B82F6,
+    #6D28D9
+  );
+
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: 0.2s ease;
 }

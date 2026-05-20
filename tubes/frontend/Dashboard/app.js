@@ -2,16 +2,48 @@ const BASE_URL =
   "https://camprentelu.azurewebsites.net/api";
 
 /* =========================
+   PLATFORM MAP
+========================= */
+
+const platformMap = {
+
+  1: "Instagram",
+  2: "TikTok",
+  3: "YouTube",
+  4: "Tokopedia"
+
+};
+
+const badgeClassMap = {
+
+  1: "instagram-badge",
+  2: "tiktok-badge",
+  3: "youtube-badge",
+  4: "tokopedia-badge"
+
+};
+
+const barClassMap = {
+
+  1: "instagram-bar",
+  2: "tiktok-bar",
+  3: "youtube-bar",
+  4: "tokopedia-bar"
+
+};
+
+/* =========================
    AREA CHART
 ========================= */
 
-const areaCtx =
-  document
-    .getElementById("areaChart")
-    .getContext("2d");
+const areaCanvas =
+  document.getElementById("areaChart");
 
-const areaChart =
-  new Chart(areaCtx, {
+let areaChart = null;
+
+if (areaCanvas) {
+
+  areaChart = new Chart(areaCanvas, {
 
     type: "line",
 
@@ -31,9 +63,32 @@ const areaChart =
           backgroundColor:
             "rgba(52,211,153,0.15)",
 
-          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 2,
 
-          fill: true
+          fill: true,
+          backgroundColor: (context) => {
+
+            const ctx = context.chart.ctx;
+
+            const gradient =
+              ctx.createLinearGradient(0,0,0,300);
+
+            gradient.addColorStop(
+              0,
+              "rgba(52,211,153,0.35)"
+            );
+
+            gradient.addColorStop(
+              1,
+              "rgba(52,211,153,0)"
+            );
+
+            return gradient;
+          },
+
+          tension: 0.4
         },
 
         {
@@ -46,9 +101,32 @@ const areaChart =
           backgroundColor:
             "rgba(59,130,246,0.15)",
 
-          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 2,
 
-          fill: true
+          fill: true,
+        backgroundColor: (context) => {
+
+          const ctx = context.chart.ctx;
+
+          const gradient =
+            ctx.createLinearGradient(0,0,0,300);
+
+          gradient.addColorStop(
+            0,
+            "rgba(99,102,241,0.35)"
+          );
+
+          gradient.addColorStop(
+            1,
+            "rgba(99,102,241,0)"
+          );
+
+          return gradient;
+        },
+
+          tension: 0.4
         }
 
       ]
@@ -78,7 +156,7 @@ const areaChart =
           },
 
           grid: {
-            color: "rgba(255,255,255,0.05)"
+            color: "rgba(255,255,255,0.06)"
           }
 
         },
@@ -90,7 +168,7 @@ const areaChart =
           },
 
           grid: {
-            color: "rgba(255,255,255,0.05)"
+            color: "rgba(255,255,255,0.06)"
           }
 
         }
@@ -101,26 +179,26 @@ const areaChart =
 
   });
 
+}
+
 /* =========================
    DONUT CHART
 ========================= */
 
-const donutCtx =
-  document
-    .getElementById("donutChart")
-    .getContext("2d");
+const donutCanvas =
+  document.getElementById("donutChart");
 
-const donutChart =
-  new Chart(donutCtx, {
+let donutChart = null;
+
+if (donutCanvas) {
+
+  donutChart = new Chart(donutCanvas, {
 
     type: "doughnut",
 
     data: {
 
-      labels: [
-        "ROAS",
-        "Remaining"
-      ],
+      labels: ["ROAS", "Remaining"],
 
       datasets: [{
 
@@ -139,6 +217,8 @@ const donutChart =
 
     options: {
 
+      responsive: true,
+
       cutout: "75%",
 
       plugins: {
@@ -153,6 +233,36 @@ const donutChart =
 
   });
 
+}
+
+/* =========================
+   DONUT PER CHANNEL
+========================= */
+
+const channelTotals = {
+
+  1: {
+    revenue: 0,
+    spend: 0
+  },
+
+  2: {
+    revenue: 0,
+    spend: 0
+  },
+
+  3: {
+    revenue: 0,
+    spend: 0
+  },
+
+  4: {
+    revenue: 0,
+    spend: 0
+  }
+
+};
+
 /* =========================
    LOAD DASHBOARD
 ========================= */
@@ -160,6 +270,8 @@ const donutChart =
 async function loadDashboard() {
 
   try {
+
+    console.log("LOAD DASHBOARD");
 
     const userData =
       JSON.parse(
@@ -179,6 +291,8 @@ async function loadDashboard() {
       userData.id ||
       3;
 
+    console.log("USER ID:", userId);
+
     /* =========================
        GET CAMPAIGNS
     ========================= */
@@ -188,8 +302,18 @@ async function loadDashboard() {
         `${BASE_URL}/GetUserCampaigns/${userId}`
       );
 
+    if (!campaignRes.ok) {
+
+      throw new Error(
+        "Gagal ambil campaign"
+      );
+
+    }
+
     const campaigns =
       await campaignRes.json();
+
+    console.log("CAMPAIGNS:", campaigns);
 
     if (!campaigns.length) {
 
@@ -200,18 +324,13 @@ async function loadDashboard() {
     }
 
     /* =========================
-       LOOP SEMUA CAMPAIGN
+       INIT
     ========================= */
 
     let totalRevenue = 0;
-
     let totalSpend = 0;
 
-    let allLabels = [];
-
-    let allRevenue = [];
-
-    let allSpend = [];
+    const chartMap = {};
 
     const tbody =
       document.querySelector(
@@ -220,167 +339,636 @@ async function loadDashboard() {
 
     tbody.innerHTML = "";
 
-    for (const campaign of campaigns) {
+    const targetRoasList =
+      document.getElementById(
+        "targetRoasList"
+      );
 
-      const campaignId =
-        campaign.campaignId;
+    if (targetRoasList) {
 
-      const [perfRes, roasRes] =
-        await Promise.all([
-
-          fetch(
-            `${BASE_URL}/PerformanceReport/${campaignId}`
-          ),
-
-          fetch(
-            `${BASE_URL}/roas/${campaignId}`
-          )
-
-        ]);
-
-      const perfData =
-        await perfRes.json();
-
-      const roasData =
-        await roasRes.json();
-
-      const performance =
-        perfData.performance || [];
-
-      let campaignRevenue = 0;
-
-      let campaignSpend = 0;
-
-      performance.forEach(item => {
-
-        const revenue =
-          Number(item.revenue) || 0;
-
-        const cost =
-          Number(item.cost) || 0;
-
-        campaignRevenue += revenue;
-
-        campaignSpend += cost;
-
-        totalRevenue += revenue;
-
-        totalSpend += cost;
-
-        allLabels.push(
-          item.tanggal || "-"
-        );
-
-        allRevenue.push(revenue);
-
-        allSpend.push(cost);
-
-      });
-
-      const tr =
-        document.createElement("tr");
-
-      tr.innerHTML = `
-
-        <td>
-          <div class="camp-name">
-            ${perfData.campaign?.namaCampaign || "-"}
-          </div>
-
-          <div class="camp-sub">
-            Campaign ID : ${campaignId}
-          </div>
-        </td>
-
-        <td>
-          <span class="channel-badge tiktok-badge">
-            Platform ${perfData.campaign?.platformId || "-"}
-          </span>
-        </td>
-
-        <td>
-          Rp ${campaignSpend.toLocaleString("id-ID")}
-        </td>
-
-        <td>
-          Rp ${campaignRevenue.toLocaleString("id-ID")}
-        </td>
-
-        <td class="revenue-green">
-          Rp ${campaignRevenue.toLocaleString("id-ID")}
-        </td>
-
-        <td>
-          ${campaignSpend > 0
-            ? (campaignRevenue / campaignSpend).toFixed(2)
-            : 0}x
-        </td>
-
-        <td class="roas-orange">
-          ${Number(roasData.roas || 0).toFixed(2)}x
-        </td>
-
-      `;
-
-      tbody.appendChild(tr);
+      targetRoasList.innerHTML = "";
 
     }
 
     /* =========================
-       UPDATE KPI
+       LOOP CAMPAIGNS
     ========================= */
 
-    document.querySelector(
-      ".revenue-val"
-    ).textContent =
-      `Rp ${totalRevenue.toLocaleString("id-ID")}`;
+    for (const campaign of campaigns) {
 
-    document.querySelector(
-      ".spend-val"
-    ).textContent =
-      `Rp ${totalSpend.toLocaleString("id-ID")}`;
+      try {
+
+        const campaignId =
+          campaign.campaignId;
+
+        console.log(
+          "PROCESS CAMPAIGN:",
+          campaignId
+        );
+
+        const [perfRes, roasRes] =
+          await Promise.all([
+
+            fetch(
+              `${BASE_URL}/PerformanceReport/${campaignId}`
+            ),
+
+            fetch(
+              `${BASE_URL}/roas/${campaignId}`
+            )
+
+          ]);
+
+        if (!perfRes.ok) {
+
+          console.log(
+            "Performance error"
+          );
+
+          continue;
+
+        }
+
+        if (!roasRes.ok) {
+
+          console.log(
+            "ROAS error"
+          );
+
+          continue;
+
+        }
+
+        const perfData =
+          await perfRes.json();
+
+        const roasData =
+          await roasRes.json();
+
+        console.log(perfData);
+        console.log(roasData);
+
+        const performance =
+  perfData.performance || [];
+
+          /* =========================
+            PLATFORM
+          ========================= */
+
+          const platformId =
+
+            perfData.campaign?.platformId ||
+
+            perfData.campaign?.platform_id ||
+
+            campaign.platformId ||
+
+            campaign.platform_id ||
+
+            1;
+
+          let campaignRevenue = 0;
+          let campaignSpend = 0;
+
+          performance.forEach(item => {
+
+          const revenue =
+            Number(item.revenue) || 0;
+
+          const cost =
+            Number(item.cost) || 0;
+
+          const tanggal =
+            item.tanggal || "-";
+
+          campaignRevenue += revenue;
+          campaignSpend += cost;
+
+          totalRevenue += revenue;
+          totalSpend += cost;
+
+          if (!channelTotals[platformId]) {
+
+            channelTotals[platformId] = {
+
+            revenue: 0,
+            spend: 0
+
+          };
+
+          }
+
+          channelTotals[platformId].revenue += revenue;
+
+          channelTotals[platformId].spend += cost;
+
+          if (!chartMap[tanggal]) {
+
+            chartMap[tanggal] = {
+
+              revenue: 0,
+              spend: 0
+
+            };
+
+          }
+
+          chartMap[tanggal].revenue += revenue;
+          chartMap[tanggal].spend += cost;
+
+        });
+
+       
+        /* =========================
+           TABLE
+        ========================= */
+
+        const tr =
+          document.createElement("tr");
+
+        tr.innerHTML = `
+
+          <td>
+
+            <div class="camp-name">
+              ${perfData.campaign?.namaCampaign || "-"}
+
+            </div>
+
+            <div class="camp-sub">
+
+              Campaign ID :
+              ${campaignId}
+
+            </div>
+
+          </td>
+
+          <td>
+
+            <span class="channel-badge ${
+              badgeClassMap[platformId] || ""
+            }">
+
+              ${platformMap[platformId] || "Unknown"}
+
+            </span>
+
+          </td>
+
+          <td>
+
+            Rp ${campaignSpend.toLocaleString("id-ID")}
+
+          </td>
+
+          <td>
+
+            Rp ${campaignRevenue.toLocaleString("id-ID")}
+
+          </td>
+
+          <td class="revenue-green">
+
+            Rp ${campaignRevenue.toLocaleString("id-ID")}
+
+          </td>
+
+          <td>
+
+            ${campaignSpend > 0
+
+              ? (
+                  campaignRevenue /
+                  campaignSpend
+                ).toFixed(2)
+
+              : 0}x
+
+          </td>
+
+          <td class="roas-orange">
+
+            ${Number(
+              roasData.roas || 0
+            ).toFixed(2)}x
+
+          </td>
+
+        `;
+
+        tbody.appendChild(tr);
+
+        /* =========================
+           TARGET ROAS
+        ========================= */
+
+        const roasValue =
+
+          campaignSpend > 0
+
+            ? campaignRevenue /
+              campaignSpend
+
+            : 0;
+
+        const percent = Math.min(
+
+          (roasValue / 5) * 100,
+
+          100
+
+        );
+
+        const targetItem =
+          document.createElement("div");
+
+        targetItem.className =
+          "troas-item";
+
+        targetItem.innerHTML = `
+
+          <div class="troas-header">
+
+            <span class="troas-name">
+
+              ${
+                platformMap[platformId] ||
+                "Platform"
+              }
+
+              -
+
+              ${
+                perfData.campaign?.namaCampaign ||
+                "Campaign"
+              }
+
+            </span>
+
+            <span class="troas-val">
+
+              ${roasValue.toFixed(2)}x
+
+            </span>
+
+          </div>
+
+          <div class="troas-bar-wrap">
+
+            <div
+
+              class="troas-bar ${
+                barClassMap[platformId] || ""
+              }"
+
+              style="width:${percent}%"
+
+            ></div>
+
+          </div>
+
+        `;
+
+        if (targetRoasList) {
+
+          targetRoasList.appendChild(
+            targetItem
+          );
+
+        }
+
+      }
+
+      catch (err) {
+
+        console.log(
+          "ERROR CAMPAIGN:",
+          err
+        );
+
+      }
+
+    }
+
+    /* =========================
+       GRAPH DATA
+    ========================= */
+
+    const labels =
+
+      Object.keys(chartMap).sort();
+
+    const revenueData = labels.map(
+
+      label =>
+        chartMap[label].revenue
+
+    );
+
+    const spendData = labels.map(
+
+      label =>
+        chartMap[label].spend
+
+    );
+
+    console.log("LABELS:", labels);
+    console.log("REVENUE:", revenueData);
+    console.log("SPEND:", spendData);
+
+    /* =========================
+       KPI
+    ========================= */
+
+    const spendEl =
+      document.querySelector(".spend-val");
+
+    const revenueEl =
+      document.querySelector(".revenue-val");
+
+    const roasEl =
+      document.querySelector(".roas-val");
+
+    const donutCenter =
+      document.querySelector(
+        ".donut-center-val"
+      );
+
+    if (spendEl) {
+
+      spendEl.textContent =
+
+        `Rp ${totalSpend.toLocaleString("id-ID")}`;
+
+    }
+
+    if (revenueEl) {
+
+      revenueEl.textContent =
+
+        `Rp ${totalRevenue.toLocaleString("id-ID")}`;
+
+    }
 
     const finalRoas =
+
       totalSpend > 0
+
         ? totalRevenue / totalSpend
+
         : 0;
 
-    document.querySelector(
-      ".roas-val"
-    ).textContent =
-      `${finalRoas.toFixed(2)}x`;
+    if (roasEl) {
 
-    document.querySelector(
-      ".donut-center-val"
-    ).textContent =
-      `${finalRoas.toFixed(2)}x`;
+      roasEl.textContent =
+
+        `${finalRoas.toFixed(2)}x`;
+
+    }
+
+    if (donutCenter) {
+
+      donutCenter.textContent =
+
+        `${finalRoas.toFixed(2)}x`;
+
+    }
+
+    /* =========================
+       ROAS PROGRESS
+    ========================= */
+
+    const roasProgress =
+      document.getElementById(
+        "roasProgress"
+      );
+
+    if (roasProgress) {
+
+      const progressWidth =
+        Math.min(
+          (finalRoas / 5) * 100,
+          100
+        );
+
+      roasProgress.style.width =
+        `${progressWidth}%`;
+
+    }
 
     /* =========================
        UPDATE AREA CHART
     ========================= */
 
-    areaChart.data.labels =
-      allLabels;
+    if (areaChart) {
 
-    areaChart.data.datasets[0].data =
-      allRevenue;
+      areaChart.data.labels =
+        labels;
 
-    areaChart.data.datasets[1].data =
-      allSpend;
+      areaChart.data.datasets[0].data =
+        revenueData;
 
-    areaChart.update();
+      areaChart.data.datasets[1].data =
+        spendData;
+
+      areaChart.update();
+
+    }
 
     /* =========================
-       UPDATE DONUT
+          DONUT PER CHANNEL
     ========================= */
 
-    donutChart.data.datasets[0].data =
-      [
-        finalRoas,
-        Math.max(5 - finalRoas, 0)
-      ];
+      const donutData = [];
 
-    donutChart.update();
+      const donutLabels = [];
+
+      const donutColors = [];
+
+      const oldLegend =
+        document.querySelector(
+          ".donut-legend"
+        );
+
+      if (oldLegend) {
+
+        oldLegend.remove();
+
+      }
+
+      const donutLegend =
+        document.createElement("ul");
+
+      donutLegend.className =
+        "donut-legend";
+
+      Object.keys(channelTotals).forEach(
+
+        key => {
+
+          const channel =
+            channelTotals[key];
+
+          const roas =
+
+            channel.spend > 0
+
+              ? channel.revenue /
+                channel.spend
+
+              : 0;
+
+          if (roas <= 0) return;
+
+          donutData.push(roas);
+
+          donutLabels.push(
+            platformMap[key]
+          );
+
+          let color = "#A78BFA";
+
+          if (Number(key) === 1) {
+
+            color = "#FBBF24";
+
+          }
+
+          else if (Number(key) === 2) {
+
+            color = "#3B82F6";
+
+          }
+
+          else if (Number(key) === 3) {
+
+            color = "#F87171";
+
+          }
+
+          donutColors.push(color);
+
+        }
+
+      );
+
+      const totalDonut =
+        donutData.reduce(
+          (a, b) => a + b,
+          0
+        );
+
+      Object.keys(channelTotals).forEach(
+
+        key => {
+
+          const channel =
+            channelTotals[key];
+
+          const roas =
+
+            channel.spend > 0
+
+              ? channel.revenue /
+                channel.spend
+
+              : 0;
+
+          if (roas <= 0) return;
+
+          const percent =
+
+            totalDonut > 0
+
+              ? (
+                  (roas / totalDonut) * 100
+                ).toFixed(0)
+
+              : 0;
+
+          const li =
+            document.createElement("li");
+
+          li.innerHTML = `
+
+            <span class="dot ${
+
+              Number(key) === 1
+                ? "instagram"
+
+              : Number(key) === 2
+                ? "tiktok"
+
+              : Number(key) === 3
+                ? "youtube"
+
+              : "tokopedia"
+
+            }"></span>
+
+            ${platformMap[key]}
+
+            <span class="legend-val ${
+
+              Number(key) === 1
+                ? "instagram-col"
+
+              : Number(key) === 2
+                ? "tiktok-col"
+
+              : Number(key) === 3
+                ? "youtube-col"
+
+              : "tokopedia-col"
+
+            }">
+
+              ${roas.toFixed(2)}x
+
+            </span>
+
+            <span class="legend-pct">
+
+              ${percent}%
+
+            </span>
+
+          `;
+
+          donutLegend.appendChild(li);
+
+        }
+
+      );
+
+      const donutWrap =
+        document.querySelector(
+          ".donut-wrap"
+        );
+
+      if (donutWrap) {
+
+        donutWrap.appendChild(
+          donutLegend
+        );
+
+      }
+
+      if (donutChart) {
+
+        donutChart.data.labels =
+          donutLabels;
+
+        donutChart.data.datasets[0].data =
+          donutData;
+
+        donutChart.data.datasets[0].backgroundColor =
+          donutColors;
+
+        donutChart.update();
+
+      }
 
     /* =========================
        TARGET %
@@ -396,25 +984,37 @@ async function loadDashboard() {
         "pencapaianPct"
       );
 
-    targetInput.addEventListener(
-      "input",
+    if (targetInput && pencapaian) {
 
-      () => {
+      targetInput.addEventListener(
 
-        const target =
-          Number(targetInput.value) || 0;
+        "input",
 
-        const percent =
-          target > 0
-            ? (totalRevenue / target) * 100
-            : 0;
+        () => {
 
-        pencapaian.textContent =
-          `${percent.toFixed(1)}%`;
+          const target =
+            Number(
+              targetInput.value
+            ) || 0;
 
-      }
+          const percent =
 
-    );
+            target > 0
+
+              ? (
+                  totalRevenue / target
+                ) * 100
+
+              : 0;
+
+          pencapaian.textContent =
+            `${percent.toFixed(1)}%`;
+
+        }
+
+      );
+
+    }
 
   }
 
