@@ -347,10 +347,9 @@ async function saveCampaign() {
 
   // mapping channel ke platformId
   const platformMap = {
-    tokopedia: 1,
-    youtube: 2,
-    google: 3,
-    tiktok: 4
+    instagram: 1,
+    tiktok: 2,
+    youtube: 3
   };
 
   // payload sesuai API backend

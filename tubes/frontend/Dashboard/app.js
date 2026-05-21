@@ -6,26 +6,23 @@ const BASE_URL =
 ========================= */
 
 const platformMap = {
-  1: "Tokopedia",
-  2: "YouTube",
-  3: "Google",
-  4: "TikTok"
+  1: "Instagram",
+  2: "Tiktok",
+  3: "Youtube",
 };
 const badgeClassMap = {
 
-  1: "tokopedia-badge",
-  2: "youtube-badge",
-  3: "google-badge",
-  4: "tiktok-badge"
+  1: "instagram-badge",
+  2: "tiktok-badge",
+  3: "youtube-badge",
 
 };
 
 const barClassMap = {
 
-  1: "tokopedia-bar",
-  2: "youtube-bar",
-  3: "google-bar",
-  4: "tiktok-bar"
+  1: "instagram-bar",
+  2: "tiktok-bar",
+  3: "youtube-bar",
 
 };
 
@@ -237,7 +234,6 @@ if (donutCanvas) {
 ========================= */
 
 const channelTotals = {
-
   1: {
     revenue: 0,
     spend: 0
@@ -251,13 +247,7 @@ const channelTotals = {
   3: {
     revenue: 0,
     spend: 0
-  },
-
-  4: {
-    revenue: 0,
-    spend: 0
   }
-
 };
 
 /* =========================

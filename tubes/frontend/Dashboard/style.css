@@ -26,7 +26,6 @@
   --tiktok: #3B82F6;
   --youtube: #F87171;
   --instagram: #FBBF24;
-  --tokopedia: #A78BFA;
 
   --sidebar-width: 240px;
   --topbar-height: 64px;
@@ -417,13 +416,11 @@ body {
 .dot.tiktok { background: var(--tiktok); }
 .dot.youtube { background: var(--youtube); }
 .dot.instagram { background: var(--instagram); }
-.dot.tokopedia { background: var(--tokopedia); }
 
 .legend-val { font-size: 12px; font-weight: 700; font-family: var(--font-mono); margin-left: auto; }
 .tiktok-col { color: var(--tiktok); }
 .youtube-col { color: var(--youtube); }
 .instagram-col { color: var(--instagram); }
-.tokopedia-col { color: var(--tokopedia); }
 
 .legend-pct {
   font-size: 11px;
@@ -577,9 +574,9 @@ body {
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
-.tokopedia-badge { background: rgba(167,139,250,0.15); color: var(--tokopedia); border: 1px solid rgba(167,139,250,0.3); }
 .tiktok-badge { background: rgba(59,130,246,0.15); color: var(--tiktok); border: 1px solid rgba(59,130,246,0.3); }
 .instagram-badge { background: rgba(251,191,36,0.12); color: var(--instagram); border: 1px solid rgba(251,191,36,0.3); }
+.youtube-badge { background: rgba(239,68,68,0.15); color: var(--youtube); border: 1px solid rgba(239,68,68,0.3); }
 
 .revenue-green { color: var(--accent-green) !important; font-weight: 600; }
 .revenue-orange { color: var(--accent-orange) !important; font-weight: 600; }
