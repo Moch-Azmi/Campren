@@ -137,13 +137,30 @@ if (donutCanvas) {
 }
 
 async function safeJsonFetch(url) {
-  const response = await fetch(url);
+  try {
+    const response = await fetch(url);
+    const text = await response.text();
 
-  if (!response.ok) {
+    if (!response.ok) {
+      console.warn("API error:", url, text);
+      return null;
+    }
+
+    if (!text) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch (err) {
+      console.warn("Response bukan JSON:", url, text);
+      return null;
+    }
+
+  } catch (err) {
+    console.error("Fetch gagal:", url, err);
     return null;
   }
-
-  return await response.json();
 }
 
 async function loadDashboard() {
@@ -205,7 +222,8 @@ async function loadDashboard() {
       const roasData =
         (await safeJsonFetch(`${BASE_URL}/roas/${campaignId}`)) || {};
 
-      const campaignInfo = perfData.campaign || {};
+      const campaignInfo =
+        perfData?.campaign || campaignItem || {};
 
       const performance =
         normalizeArray(perfData?.performance || perfData);
