@@ -134,193 +134,116 @@ channelBtns.forEach(btn => {
 });
 
 // ============================================================
-// 5. ROAS AKTUAL CALCULATION
+// 5. ROAS & CTR AUTO CALCULATION
 // ============================================================
-const anggaranInput  = document.getElementById('anggaran');
-const roasAktualCard  = document.getElementById('roasAktualCard');
-const roasFormula     = document.getElementById('roasFormula');
-const roasValue       = document.getElementById('roasValue');
-const roasStatus      = document.getElementById('roasStatus');
 
-/**
- * Format angka ke format Rupiah singkat
- * Misal: 12500000 → "12,5 Jt"
- */
+const anggaranInput = document.getElementById("anggaran");
+const targetRevenueInput = document.getElementById("targetRevenue");
+const targetViewsInput = document.getElementById("targetViews");
+const targetClicksInput = document.getElementById("targetClicks");
+const targetCTRInput = document.getElementById("targetCTR");
+
+const roasAktualCard = document.getElementById("roasAktualCard");
+const roasFormula = document.getElementById("roasFormula");
+const roasValue = document.getElementById("roasValue");
+const roasStatus = document.getElementById("roasStatus");
+
+const ctrPreview = document.getElementById("ctrPreview");
+const ctrBarFill = document.getElementById("ctrBarFill");
+const ctrBarLabel = document.getElementById("ctrBarLabel");
+
 function formatRupiahShort(value) {
-  if (!value || isNaN(value)) return '–';
-  const num = parseFloat(value);
-  if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + ' M';
-  if (num >= 1_000_000)     return (num / 1_000_000).toFixed(1) + ' Jt';
-  if (num >= 1_000)         return (num / 1_000).toFixed(0) + ' Rb';
-  return num.toLocaleString('id-ID');
+  const num = Number(value);
+
+  if (!num || isNaN(num)) return "–";
+  if (num >= 1000000000) return (num / 1000000000).toFixed(1) + " M";
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + " Jt";
+  if (num >= 1000) return (num / 1000).toFixed(0) + " Rb";
+
+  return num.toLocaleString("id-ID");
 }
 
-/**
- * Hitung dan tampilkan ROAS Aktual
- * ROAS = Revenue / Anggaran
- */
-  if (anggaran > 0 && revenue > 0) {
-    const aktualROAS = revenue / anggaran;
-
-    // Update formula display
-    roasFormula.textContent = `${formatRupiahShort(revenue)} / ${formatRupiahShort(anggaran)}`;
-    roasValue.textContent   = aktualROAS.toFixed(2) + 'x';
-
-    // Bandingkan dengan target ROAS
-    if (targetROAS > 0) {
-      const isGood = aktualROAS >= targetROAS;
-      roasStatus.classList.add('show');
-      roasStatus.className = 'roas-status show ' + (isGood ? 'good' : 'bad');
-      roasStatus.textContent = isGood
-        ? `▲ Di atas target ${targetROAS}x`
-        : `▼ Di bawah target ${targetROAS}x`;
-
-      roasAktualCard.className = 'roas-aktual-card ' + (isGood ? 'status-good' : 'status-bad');
-    } else {
-      roasStatus.classList.remove('show');
-      roasAktualCard.className = 'roas-aktual-card';
-    }
-
-  } else {
-    // Reset jika input kosong
-    roasFormula.textContent = '– / –';
-    roasValue.textContent   = '–x';
-    roasStatus.classList.remove('show');
-    roasAktualCard.className = 'roas-aktual-card';
-  }
-
-// Event listeners untuk ROAS
-anggaranInput.addEventListener('input', calculateROAS);
-estRevenueInput.addEventListener('input', calculateROAS);
 function calculateROAS() {
-  const anggaran = parseFloat(anggaranInput.value) || 0;
-  const revenue  = parseFloat(
-    document.getElementById('targetRevenue').value
-  ) || 0;
+  const anggaran = Number(anggaranInput.value) || 0;
+  const revenue = Number(targetRevenueInput.value) || 0;
 
   if (anggaran > 0 && revenue > 0) {
-
     const roas = revenue / anggaran;
 
     roasFormula.textContent =
       `${formatRupiahShort(revenue)} / ${formatRupiahShort(anggaran)}`;
 
     roasValue.textContent =
-      roas.toFixed(2) + 'x';
+      roas.toFixed(2) + "x";
 
-    roasStatus.classList.add('show');
+    roasStatus.classList.add("show");
 
-    // status ROAS
     if (roas >= 5) {
-
-      roasStatus.className =
-        'roas-status show good';
-
-      roasStatus.textContent =
-        '▲ Sangat bagus';
-
-      roasAktualCard.className =
-        'roas-aktual-card status-good';
-
+      roasStatus.className = "roas-status show good";
+      roasStatus.textContent = "▲ Sangat bagus";
+      roasAktualCard.className = "roas-aktual-card status-good";
     } else if (roas >= 2) {
-
-      roasStatus.className =
-        'roas-status show';
-
-      roasStatus.textContent =
-        '● Normal';
-
-      roasAktualCard.className =
-        'roas-aktual-card';
-
+      roasStatus.className = "roas-status show";
+      roasStatus.textContent = "● Normal";
+      roasAktualCard.className = "roas-aktual-card";
     } else {
-
-      roasStatus.className =
-        'roas-status show bad';
-
-      roasStatus.textContent =
-        '▼ Kurang optimal';
-
-      roasAktualCard.className =
-        'roas-aktual-card status-bad';
+      roasStatus.className = "roas-status show bad";
+      roasStatus.textContent = "▼ Kurang optimal";
+      roasAktualCard.className = "roas-aktual-card status-bad";
     }
 
   } else {
-
-    roasFormula.textContent = '– / –';
-    roasValue.textContent   = '–x';
-
-    roasStatus.classList.remove('show');
-
-    roasAktualCard.className =
-      'roas-aktual-card';
+    roasFormula.textContent = "– / –";
+    roasValue.textContent = "–x";
+    roasStatus.textContent = "";
+    roasStatus.className = "roas-status";
+    roasAktualCard.className = "roas-aktual-card";
   }
 }
-
-// ============================================================
-// 6. CTR PREVIEW BAR
-// ============================================================
-const targetViewsInput  = document.getElementById('targetViews');
-const targetClicksInput = document.getElementById('targetClicks');
-
-const ctrPreview  = document.getElementById('ctrPreview');
-const ctrBarFill  = document.getElementById('ctrBarFill');
-const ctrBarLabel = document.getElementById('ctrBarLabel');
 
 function calculateCTR() {
-
-  const views  = parseFloat(targetViewsInput.value) || 0;
-  const clicks = parseFloat(targetClicksInput.value) || 0;
+  const views = Number(targetViewsInput.value) || 0;
+  const clicks = Number(targetClicksInput.value) || 0;
 
   if (views > 0 && clicks > 0) {
-
     const ctr = (clicks / views) * 100;
 
-    ctrPreview.style.display = 'flex';
+    targetCTRInput.value = ctr.toFixed(2);
 
-    ctrBarFill.style.width =
-      Math.min(ctr, 100) + '%';
-
-    ctrBarLabel.textContent =
-      ctr.toFixed(2) + '%';
-
-    // isi otomatis ke input CTR
-    document.getElementById('targetCTR').value =
-      ctr.toFixed(2);
+    ctrPreview.style.display = "flex";
+    ctrBarFill.style.width = Math.min(ctr, 100) + "%";
+    ctrBarLabel.textContent = ctr.toFixed(2) + "%";
 
     if (ctr >= 5) {
-
       ctrBarFill.style.background =
-        'linear-gradient(90deg, #22c55e, #86efac)';
-
+        "linear-gradient(90deg, #22c55e, #86efac)";
     } else if (ctr >= 2) {
-
       ctrBarFill.style.background =
-        'linear-gradient(90deg, #6366f1, #a5b4fc)';
-
+        "linear-gradient(90deg, #6366f1, #a5b4fc)";
     } else {
-
       ctrBarFill.style.background =
-        'linear-gradient(90deg, #ef4444, #fca5a5)';
+        "linear-gradient(90deg, #ef4444, #fca5a5)";
     }
 
   } else {
-
-    ctrPreview.style.display = 'none';
-
-    document.getElementById('targetCTR').value = '';
+    targetCTRInput.value = "";
+    ctrPreview.style.display = "none";
   }
 }
 
-anggaranInput.addEventListener('input', calculateROAS);
+function calculateAllPreview() {
+  calculateROAS();
+  calculateCTR();
+}
 
-document
-  .getElementById('targetRevenue')
-  .addEventListener('input', calculateROAS);
-
-targetViewsInput.addEventListener('input', calculateCTR);
-
-targetClicksInput.addEventListener('input', calculateCTR);
+[
+  anggaranInput,
+  targetRevenueInput,
+  targetViewsInput,
+  targetClicksInput
+].forEach(input => {
+  input.addEventListener("input", calculateAllPreview);
+});
 
 // ============================================================
 // 7. SAVE CAMPAIGN – Validasi & Toast
