@@ -137,8 +137,6 @@ channelBtns.forEach(btn => {
 // 5. ROAS AKTUAL CALCULATION
 // ============================================================
 const anggaranInput  = document.getElementById('anggaran');
-const estRevenueInput = document.getElementById('estRevenue');
-const targetRoasInput = document.getElementById('targetRoas');
 const roasAktualCard  = document.getElementById('roasAktualCard');
 const roasFormula     = document.getElementById('roasFormula');
 const roasValue       = document.getElementById('roasValue');
@@ -161,11 +159,6 @@ function formatRupiahShort(value) {
  * Hitung dan tampilkan ROAS Aktual
  * ROAS = Revenue / Anggaran
  */
-function calculateROAS() {
-  const anggaran  = parseFloat(anggaranInput.value)   || 0;
-  const revenue   = parseFloat(estRevenueInput.value) || 0;
-  const targetROAS = parseFloat(targetRoasInput.value) || 0;
-
   if (anggaran > 0 && revenue > 0) {
     const aktualROAS = revenue / anggaran;
 
@@ -195,131 +188,151 @@ function calculateROAS() {
     roasStatus.classList.remove('show');
     roasAktualCard.className = 'roas-aktual-card';
   }
-}
 
 // Event listeners untuk ROAS
 anggaranInput.addEventListener('input', calculateROAS);
 estRevenueInput.addEventListener('input', calculateROAS);
-targetRoasInput.addEventListener('input', calculateROAS);
+function calculateROAS() {
+  const anggaran = parseFloat(anggaranInput.value) || 0;
+  const revenue  = parseFloat(
+    document.getElementById('targetRevenue').value
+  ) || 0;
+
+  if (anggaran > 0 && revenue > 0) {
+
+    const roas = revenue / anggaran;
+
+    roasFormula.textContent =
+      `${formatRupiahShort(revenue)} / ${formatRupiahShort(anggaran)}`;
+
+    roasValue.textContent =
+      roas.toFixed(2) + 'x';
+
+    roasStatus.classList.add('show');
+
+    // status ROAS
+    if (roas >= 5) {
+
+      roasStatus.className =
+        'roas-status show good';
+
+      roasStatus.textContent =
+        '▲ Sangat bagus';
+
+      roasAktualCard.className =
+        'roas-aktual-card status-good';
+
+    } else if (roas >= 2) {
+
+      roasStatus.className =
+        'roas-status show';
+
+      roasStatus.textContent =
+        '● Normal';
+
+      roasAktualCard.className =
+        'roas-aktual-card';
+
+    } else {
+
+      roasStatus.className =
+        'roas-status show bad';
+
+      roasStatus.textContent =
+        '▼ Kurang optimal';
+
+      roasAktualCard.className =
+        'roas-aktual-card status-bad';
+    }
+
+  } else {
+
+    roasFormula.textContent = '– / –';
+    roasValue.textContent   = '–x';
+
+    roasStatus.classList.remove('show');
+
+    roasAktualCard.className =
+      'roas-aktual-card';
+  }
+}
 
 // ============================================================
 // 6. CTR PREVIEW BAR
 // ============================================================
-const targetCTRInput = document.getElementById('targetCTR');
-const ctrPreview     = document.getElementById('ctrPreview');
-const ctrBarFill     = document.getElementById('ctrBarFill');
-const ctrBarLabel    = document.getElementById('ctrBarLabel');
+const targetViewsInput  = document.getElementById('targetViews');
+const targetClicksInput = document.getElementById('targetClicks');
 
-targetCTRInput.addEventListener('input', () => {
-  const ctr = parseFloat(targetCTRInput.value);
+const ctrPreview  = document.getElementById('ctrPreview');
+const ctrBarFill  = document.getElementById('ctrBarFill');
+const ctrBarLabel = document.getElementById('ctrBarLabel');
 
-  if (!isNaN(ctr) && ctr >= 0) {
+function calculateCTR() {
+
+  const views  = parseFloat(targetViewsInput.value) || 0;
+  const clicks = parseFloat(targetClicksInput.value) || 0;
+
+  if (views > 0 && clicks > 0) {
+
+    const ctr = (clicks / views) * 100;
+
     ctrPreview.style.display = 'flex';
-    
-    // Clamp antara 0-100%
-    const clampedCTR = Math.min(Math.max(ctr, 0), 100);
-    ctrBarFill.style.width = clampedCTR + '%';
-    ctrBarLabel.textContent = clampedCTR.toFixed(2) + '%';
 
-    // Warna bar berdasarkan nilai CTR
-    // CTR > 5% dianggap sangat baik untuk digital ads
-    if (clampedCTR >= 5) {
-      ctrBarFill.style.background = 'linear-gradient(90deg, #22c55e, #86efac)';
-    } else if (clampedCTR >= 2) {
-      ctrBarFill.style.background = 'linear-gradient(90deg, #6366f1, #a5b4fc)';
+    ctrBarFill.style.width =
+      Math.min(ctr, 100) + '%';
+
+    ctrBarLabel.textContent =
+      ctr.toFixed(2) + '%';
+
+    // isi otomatis ke input CTR
+    document.getElementById('targetCTR').value =
+      ctr.toFixed(2);
+
+    if (ctr >= 5) {
+
+      ctrBarFill.style.background =
+        'linear-gradient(90deg, #22c55e, #86efac)';
+
+    } else if (ctr >= 2) {
+
+      ctrBarFill.style.background =
+        'linear-gradient(90deg, #6366f1, #a5b4fc)';
+
     } else {
-      ctrBarFill.style.background = 'linear-gradient(90deg, #ef4444, #fca5a5)';
+
+      ctrBarFill.style.background =
+        'linear-gradient(90deg, #ef4444, #fca5a5)';
     }
+
   } else {
+
     ctrPreview.style.display = 'none';
+
+    document.getElementById('targetCTR').value = '';
   }
-});
+}
+
+anggaranInput.addEventListener('input', calculateROAS);
+
+document
+  .getElementById('targetRevenue')
+  .addEventListener('input', calculateROAS);
+
+targetViewsInput.addEventListener('input', calculateCTR);
+
+targetClicksInput.addEventListener('input', calculateCTR);
 
 // ============================================================
 // 7. SAVE CAMPAIGN – Validasi & Toast
 // ============================================================
 
-/**
- * Tampilkan toast notification
- * @param {string} message - pesan yang ditampilkan
- * @param {'success'|'error'} type - tipe notifikasi
- */
-function showToast(message, type = 'success') {
-  const toast = document.getElementById('toast');
-  toast.textContent = message;
-  toast.className   = `toast show ${type}`;
+// ============================================================
+// 7. SAVE CAMPAIGN – SAVE TO API
+// ============================================================
 
-  setTimeout(() => {
-    toast.className = 'toast';
-  }, 3500);
-}
+async function saveCampaign() {
 
-/**
- * Kumpulkan semua data form ke object
- * @returns {object} data campaign
- */
-function collectFormData() {
-  return {
-    namaCampaign:  document.getElementById('namaCampaign').value.trim(),
-    channel:       selectedChannel,
-    namaProduk:    document.getElementById('namaProduk').value.trim(),
-    anggaran:      parseFloat(document.getElementById('anggaran').value)    || 0,
-    estRevenue:    parseFloat(document.getElementById('estRevenue').value)  || 0,
-    targetRoas:    parseFloat(document.getElementById('targetRoas').value)  || 0,
-    targetViews:   parseInt(document.getElementById('targetViews').value)   || 0,
-    targetClicks:  parseInt(document.getElementById('targetClicks').value)  || 0,
-    targetRevenue: parseFloat(document.getElementById('targetRevenue').value) || 0,
-    targetCTR:     parseFloat(document.getElementById('targetCTR').value)   || 0,
-  };
-}
-
-/**
- * Validasi form sebelum simpan
- * @param {object} data - data dari collectFormData()
- * @returns {{ valid: boolean, message: string }}
- */
-function validateForm(data) {
-  if (!data.namaCampaign) {
-    scrollToSection('section-1');
-    return { valid: false, message: '⚠️ Nama Campaign wajib diisi!' };
-  }
-  if (!data.channel) {
-    scrollToSection('section-1');
-    return { valid: false, message: '⚠️ Pilih minimal 1 Channel!' };
-  }
-  if (!data.namaProduk) {
-    scrollToSection('section-1');
-    return { valid: false, message: '⚠️ Nama Produk wajib diisi!' };
-  }
-  if (data.anggaran <= 0) {
-    scrollToSection('section-2');
-    return { valid: false, message: '⚠️ Anggaran harus diisi!' };
-  }
-  if (data.targetViews <= 0) {
-    scrollToSection('section-3');
-    return { valid: false, message: '⚠️ Target Jumlah Views harus diisi!' };
-  }
-  if (data.targetClicks <= 0) {
-    scrollToSection('section-3');
-    return { valid: false, message: '⚠️ Target Clicks harus diisi!' };
-  }
-  if (data.targetRevenue <= 0) {
-    scrollToSection('section-3');
-    return { valid: false, message: '⚠️ Target Revenue harus diisi!' };
-  }
-  if (data.targetCTR <= 0) {
-    scrollToSection('section-3');
-    return { valid: false, message: '⚠️ Target Rasio CTR harus diisi!' };
-  }
-
-  return { valid: true, message: '' };
-}
-
-/**
- * Handle tombol Save Campaign
- */
-function saveCampaign() {
-  const data       = collectFormData();
+  const data = collectFormData();
   const validation = validateForm(data);
 
   if (!validation.valid) {
@@ -327,24 +340,128 @@ function saveCampaign() {
     return;
   }
 
-  // Simulasi save (di real app, ini akan kirim ke API/backend)
   const btn = document.getElementById('btnSave');
-  btn.disabled     = true;
-  btn.textContent  = 'Menyimpan...';
 
-  setTimeout(() => {
-    console.log('Data Campaign tersimpan:', data);
-    showToast(`✅ Campaign "${data.namaCampaign}" berhasil disimpan!`, 'success');
-    btn.disabled    = false;
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+
+  // mapping channel ke platformId
+  const platformMap = {
+    tokopedia: 1,
+    youtube: 2,
+    google: 3,
+    tiktok: 4
+  };
+
+  // payload sesuai API backend
+  const payload = {
+    userId: 3,
+
+    platformId: platformMap[data.channel],
+
+    namaCampaign: data.namaCampaign,
+
+    budget: data.anggaran,
+
+    tanggalMulai:
+      document.getElementById('tanggalMulai').value,
+
+    tanggalAkhir:
+      document.getElementById('tanggalBerakhir').value,
+
+    targetViews: data.targetViews,
+
+    targetClicks: data.targetClicks,
+
+    targetIncome: data.targetRevenue
+  };
+
+  try {
+
+    const response = await fetch(
+      'https://camprentelu.azurewebsites.net/api/campaign',
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json'
+        },
+
+        body: JSON.stringify(payload)
+      }
+    );
+
+    // ambil response text/json
+    const result = await response.text();
+
+    if (!response.ok) {
+      throw new Error(result);
+    }
+
+    console.log('SUCCESS:', result);
+
+    showToast(
+      `✅ Campaign "${data.namaCampaign}" berhasil disimpan!`,
+      'success'
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    showToast(
+      '❌ Gagal menyimpan campaign!',
+      'error'
+    );
+
+  } finally {
+
+    btn.disabled = false;
+
     btn.innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg width="16" height="16" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2">
         <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
         <polyline points="17 21 17 13 7 13 7 21"/>
         <polyline points="7 3 7 8 15 8"/>
       </svg>
       Save Campaign
     `;
-  }, 1200);
+  }
+}
+
+function collectFormData() {
+  return {
+    namaCampaign: document.getElementById('namaCampaign').value,
+    channel: selectedChannel,
+    anggaran: parseFloat(document.getElementById('anggaran').value) || 0,
+    targetViews: parseFloat(document.getElementById('targetViews').value) || 0,
+    targetClicks: parseFloat(document.getElementById('targetClicks').value) || 0,
+    targetRevenue: parseFloat(document.getElementById('targetRevenue').value) || 0
+  };
+}
+
+function validateForm(data) {
+  if (!data.namaCampaign) {
+    return { valid: false, message: 'Nama campaign wajib diisi' };
+  }
+
+  if (!data.channel) {
+    return { valid: false, message: 'Pilih channel dulu' };
+  }
+
+  return { valid: true };
+}
+
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+
+  toast.textContent = message;
+  toast.className = `toast show ${type}`;
+
+  setTimeout(() => {
+    toast.className = 'toast';
+  }, 3000);
 }
 
 // ============================================================

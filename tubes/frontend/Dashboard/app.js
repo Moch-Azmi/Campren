@@ -6,29 +6,26 @@ const BASE_URL =
 ========================= */
 
 const platformMap = {
-
-  1: "Instagram",
-  2: "TikTok",
-  3: "YouTube",
-  4: "Tokopedia"
-
+  1: "Tokopedia",
+  2: "YouTube",
+  3: "Google",
+  4: "TikTok"
 };
-
 const badgeClassMap = {
 
-  1: "instagram-badge",
-  2: "tiktok-badge",
-  3: "youtube-badge",
-  4: "tokopedia-badge"
+  1: "tokopedia-badge",
+  2: "youtube-badge",
+  3: "google-badge",
+  4: "tiktok-badge"
 
 };
 
 const barClassMap = {
 
-  1: "instagram-bar",
-  2: "tiktok-bar",
-  3: "youtube-bar",
-  4: "tokopedia-bar"
+  1: "tokopedia-bar",
+  2: "youtube-bar",
+  3: "google-bar",
+  4: "tiktok-bar"
 
 };
 
@@ -310,12 +307,19 @@ async function loadDashboard() {
 
     }
 
+    const result =
+    await campaignRes.json();
+
+    console.log(result);
+
     const campaigns =
-      await campaignRes.json();
+      result.$values ||
+      result.data ||
+      result;
 
     console.log("CAMPAIGNS:", campaigns);
 
-    if (!campaigns.length) {
+    if (!Array.isArray(campaigns) || campaigns.length === 0) {
 
       alert("Campaign kosong");
 
