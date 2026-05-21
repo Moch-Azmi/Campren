@@ -353,6 +353,7 @@ async function loadDashboard() {
       try {
 
         const campaignId =
+          campaign.campaign_id ||
           campaign.campaignId;
 
         console.log(
@@ -397,7 +398,9 @@ async function loadDashboard() {
         console.log(roasData);
 
         const performance =
-  perfData.performance || [];
+          perfData.performance?.$values ||
+          perfData.performance ||
+          [];
 
           /* =========================
             PLATFORM
@@ -415,13 +418,26 @@ async function loadDashboard() {
 
             1;
 
-          let campaignRevenue =
-            Number(campaign.target_income) || 0;
+          const campaignRevenue =
+          Number(
+            campaign.target_income ||
+            campaign.targetIncome
+          ) || 0;
 
-          let campaignSpend =
-            Number(campaign.budget) || 0;
+        const campaignSpend =
+          Number(campaign.budget) || 0;
 
-          performance.forEach(item => {
+        const actualRevenue =
+          performance.reduce(
+            (sum, item) =>
+              sum + (Number(item.revenue) || 0),
+            0
+          );
+
+        totalRevenue += actualRevenue;
+        totalSpend += campaignSpend;
+
+        performance.forEach(item => {
 
           const revenue =
             Number(item.revenue) || 0;
@@ -432,17 +448,14 @@ async function loadDashboard() {
           const tanggal =
             item.tanggal || "-";
 
-          totalRevenue += revenue;
-          totalSpend += cost;
-
           if (!channelTotals[platformId]) {
 
             channelTotals[platformId] = {
 
-            revenue: 0,
-            spend: 0
+              revenue: 0,
+              spend: 0
 
-          };
+            };
 
           }
 
@@ -461,10 +474,10 @@ async function loadDashboard() {
 
           }
 
-          chartMap[tanggal].revenue += revenue;
-          chartMap[tanggal].spend += cost;
+  chartMap[tanggal].revenue += revenue;
+  chartMap[tanggal].spend += cost;
 
-        });
+});
 
        
         /* =========================
@@ -479,7 +492,7 @@ async function loadDashboard() {
           <td>
 
             <div class="camp-name">
-              ${perfData.campaign?.namaCampaign || "-"}
+              ${campaign.nama_campaign || campaign.namaCampaign || "-"}
 
             </div>
 
@@ -509,19 +522,19 @@ async function loadDashboard() {
           </td>
 
           <td>
-            Rp ${(campaign.targetIncome || 0).toLocaleString("id-ID")}
-          </td>
-
-          <td class="revenue-green">
             Rp ${campaignRevenue.toLocaleString("id-ID")}
           </td>
 
-          <td>
+          <td class="revenue-green">
+            Rp ${actualRevenue.toLocaleString("id-ID")}
+          </td>
+
+         <td>
 
             ${campaignSpend > 0
 
               ? (
-                  campaignRevenue /
+                  actualRevenue /
                   campaignSpend
                 ).toFixed(2)
 
@@ -547,12 +560,12 @@ async function loadDashboard() {
 
         const roasValue =
 
-          campaignSpend > 0
+        campaignSpend > 0
 
-            ? campaignRevenue /
-              campaignSpend
+          ? actualRevenue /
+            campaignSpend
 
-            : 0;
+          : 0;
 
         const percent = Math.min(
 
@@ -582,7 +595,8 @@ async function loadDashboard() {
               -
 
               ${
-                perfData.campaign?.namaCampaign ||
+                campaign.nama_campaign ||
+                campaign.namaCampaign ||
                 "Campaign"
               }
 
