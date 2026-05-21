@@ -353,27 +353,38 @@ async function saveCampaign() {
   };
 
   // payload sesuai API backend
-  const payload = {
-    userId: 3,
+ const userData = JSON.parse(localStorage.getItem("user"));
 
-    platformId: platformMap[data.channel],
+const userId =
+  userData?.userId ||
+  userData?.id;
 
-    namaCampaign: data.namaCampaign,
+if (!userId) {
+  showToast("User belum login", "error");
+  return;
+}
 
-    budget: data.anggaran,
+const payload = {
+  userId: userId,
 
-    tanggalMulai:
-      document.getElementById('tanggalMulai').value,
+  platformId: platformMap[data.channel],
 
-    tanggalAkhir:
-      document.getElementById('tanggalBerakhir').value,
+  namaCampaign: data.namaCampaign,
 
-    targetViews: data.targetViews,
+  budget: data.anggaran,
 
-    targetClicks: data.targetClicks,
+  tanggalMulai:
+    document.getElementById("tanggalMulai").value,
 
-    targetIncome: data.targetRevenue
-  };
+  tanggalAkhir:
+    document.getElementById("tanggalBerakhir").value,
+
+  targetViews: data.targetViews,
+
+  targetClicks: data.targetClicks,
+
+  targetIncome: data.targetRevenue
+};
 
   try {
 
