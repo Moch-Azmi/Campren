@@ -373,32 +373,26 @@ async function loadDashboard() {
 
           ]);
 
-        if (!perfRes.ok) {
+        let perfData = {
+          performance: [],
+          campaign: campaign
+        };
 
-          console.log(
-            "Performance error"
-          );
+        let roasData = {
+          roas: 0
+        };
 
-          continue;
-
+        if (perfRes.ok) {
+          perfData = await perfRes.json();
+        } else {
+          console.log("Performance error:", campaignId);
         }
 
-        if (!roasRes.ok) {
-
-          console.log(
-            "ROAS error"
-          );
-
-          continue;
-
+        if (roasRes.ok) {
+          roasData = await roasRes.json();
+        } else {
+          console.log("ROAS error:", campaignId);
         }
-
-        const perfData =
-          await perfRes.json();
-
-        const roasData =
-          await roasRes.json();
-
         console.log(perfData);
         console.log(roasData);
 
@@ -421,8 +415,11 @@ async function loadDashboard() {
 
             1;
 
-          let campaignRevenue = 0;
-          let campaignSpend = 0;
+          let campaignRevenue =
+            Number(campaign.target_income) || 0;
+
+          let campaignSpend =
+            Number(campaign.budget) || 0;
 
           performance.forEach(item => {
 
@@ -434,9 +431,6 @@ async function loadDashboard() {
 
           const tanggal =
             item.tanggal || "-";
-
-          campaignRevenue += revenue;
-          campaignSpend += cost;
 
           totalRevenue += revenue;
           totalSpend += cost;
@@ -511,21 +505,15 @@ async function loadDashboard() {
           </td>
 
           <td>
-
             Rp ${campaignSpend.toLocaleString("id-ID")}
-
           </td>
 
           <td>
-
-            Rp ${campaignRevenue.toLocaleString("id-ID")}
-
+            Rp ${(campaign.targetIncome || 0).toLocaleString("id-ID")}
           </td>
 
           <td class="revenue-green">
-
             Rp ${campaignRevenue.toLocaleString("id-ID")}
-
           </td>
 
           <td>
