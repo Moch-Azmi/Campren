@@ -1,1030 +1,724 @@
-const BASE_URL =
-  "https://camprentelu.azurewebsites.net/api";
+const BASE_URL = "https://camprentelu.azurewebsites.net/api";
 
 /* =========================
-   PLATFORM MAP
+   PLATFORM
 ========================= */
 
 const platformMap = {
   1: "Instagram",
   2: "Tiktok",
-  3: "Youtube",
+  3: "Youtube"
 };
-const badgeClassMap = {
 
+const badgeClassMap = {
   1: "instagram-badge",
   2: "tiktok-badge",
-  3: "youtube-badge",
-
+  3: "youtube-badge"
 };
 
 const barClassMap = {
-
   1: "instagram-bar",
   2: "tiktok-bar",
-  3: "youtube-bar",
-
+  3: "youtube-bar"
 };
 
+
 /* =========================
-   AREA CHART
+   HELPERS
 ========================= */
 
-const areaCanvas =
-  document.getElementById("areaChart");
+function getVal(obj, keys, fallback = 0){
 
-let areaChart = null;
+    for(const key of keys){
 
-if (areaCanvas) {
-
-  areaChart = new Chart(areaCanvas, {
-
-    type: "line",
-
-    data: {
-
-      labels: [],
-
-      datasets: [
-
-        {
-          label: "Revenue",
-
-          data: [],
-
-          borderColor: "#34D399",
-
-          backgroundColor:
-            "rgba(52,211,153,0.15)",
-
-          pointRadius: 2,
-          pointHoverRadius: 4,
-          borderWidth: 2,
-
-          fill: true,
-          backgroundColor: (context) => {
-
-            const ctx = context.chart.ctx;
-
-            const gradient =
-              ctx.createLinearGradient(0,0,0,300);
-
-            gradient.addColorStop(
-              0,
-              "rgba(52,211,153,0.35)"
-            );
-
-            gradient.addColorStop(
-              1,
-              "rgba(52,211,153,0)"
-            );
-
-            return gradient;
-          },
-
-          tension: 0.4
-        },
-
-        {
-          label: "Spend",
-
-          data: [],
-
-          borderColor: "#3B82F6",
-
-          backgroundColor:
-            "rgba(59,130,246,0.15)",
-
-          pointRadius: 2,
-          pointHoverRadius: 4,
-          borderWidth: 2,
-
-          fill: true,
-        backgroundColor: (context) => {
-
-          const ctx = context.chart.ctx;
-
-          const gradient =
-            ctx.createLinearGradient(0,0,0,300);
-
-          gradient.addColorStop(
-            0,
-            "rgba(99,102,241,0.35)"
-          );
-
-          gradient.addColorStop(
-            1,
-            "rgba(99,102,241,0)"
-          );
-
-          return gradient;
-        },
-
-          tension: 0.4
+        if(
+            obj &&
+            obj[key] !== undefined &&
+            obj[key] !== null
+        ){
+            return obj[key];
         }
-
-      ]
-
-    },
-
-    options: {
-
-      responsive: true,
-
-      maintainAspectRatio: false,
-
-      plugins: {
-
-        legend: {
-          display: false
-        }
-
-      },
-
-      scales: {
-
-        x: {
-
-          ticks: {
-            color: "#8B8FA8"
-          },
-
-          grid: {
-            color: "rgba(255,255,255,0.06)"
-          }
-
-        },
-
-        y: {
-
-          ticks: {
-            color: "#8B8FA8"
-          },
-
-          grid: {
-            color: "rgba(255,255,255,0.06)"
-          }
-
-        }
-
-      }
 
     }
 
-  });
+    return fallback;
+}
+
+
+function normalizeArray(data){
+
+    if(Array.isArray(data))
+        return data;
+
+    if(Array.isArray(data?.$values))
+        return data.$values;
+
+    if(Array.isArray(data?.data))
+        return data.data;
+
+    if(Array.isArray(data?.data?.$values))
+        return data.data.$values;
+
+    if(Array.isArray(data?.performance))
+        return data.performance;
+
+    if(Array.isArray(data?.performance?.$values))
+        return data.performance.$values;
+
+    return [];
 
 }
 
+
 /* =========================
-   DONUT CHART
+   CHARTS
 ========================= */
 
-const donutCanvas =
-  document.getElementById("donutChart");
+const areaCanvas=document.getElementById("areaChart");
 
-let donutChart = null;
+let areaChart=null;
 
-if (donutCanvas) {
+if(areaCanvas){
 
-  donutChart = new Chart(donutCanvas, {
+areaChart=new Chart(areaCanvas,{
 
-    type: "doughnut",
+type:"line",
 
-    data: {
+data:{
+labels:[],
+datasets:[
 
-      labels: ["ROAS", "Remaining"],
+{
+label:"Revenue",
+data:[],
+borderColor:"#34D399",
+fill:true,
+tension:0.4
+},
 
-      datasets: [{
+{
+label:"Spend",
+data:[],
+borderColor:"#3B82F6",
+fill:true,
+tension:0.4
+}
 
-        data: [0, 5],
+]
+},
 
-        backgroundColor: [
-          "#8B5CF6",
-          "#1E293B"
-        ],
+options:{
+responsive:true,
+maintainAspectRatio:false,
+plugins:{
+legend:{
+display:false
+}
+}
+}
 
-        borderWidth: 0
-
-      }]
-
-    },
-
-    options: {
-
-      responsive: true,
-
-      cutout: "75%",
-
-      plugins: {
-
-        legend: {
-          display: false
-        }
-
-      }
-
-    }
-
-  });
+});
 
 }
 
-/* =========================
-   DONUT PER CHANNEL
-========================= */
 
-const channelTotals = {
-  1: {
-    revenue: 0,
-    spend: 0
-  },
+const donutCanvas=
+document.getElementById("donutChart");
 
-  2: {
-    revenue: 0,
-    spend: 0
-  },
+let donutChart=null;
 
-  3: {
-    revenue: 0,
-    spend: 0
-  }
-};
+if(donutCanvas){
+
+donutChart=new Chart(
+donutCanvas,
+{
+
+type:"doughnut",
+
+data:{
+
+labels:["No Data"],
+
+datasets:[{
+
+data:[1],
+
+backgroundColor:[
+"#1E293B"
+]
+
+}]
+
+},
+
+options:{
+responsive:true,
+cutout:"75%"
+}
+
+}
+
+);
+
+}
+
+
 
 /* =========================
    LOAD DASHBOARD
 ========================= */
 
-async function loadDashboard() {
+async function loadDashboard(){
 
-  try {
+try{
 
-    console.log("LOAD DASHBOARD");
+console.log("LOAD DASHBOARD");
 
-    const userData =
-      JSON.parse(
-        localStorage.getItem("user")
-      );
 
-    if (!userData) {
+const userData=
+JSON.parse(
+localStorage.getItem("user")
+);
 
-      alert("User belum login");
 
-      return;
+if(!userData){
 
-    }
+alert("User belum login");
+return;
 
-    const userId =
-      userData.userId ||
-      userData.id ||
-      3;
+}
 
-    console.log("USER ID:", userId);
 
-    /* =========================
-       GET CAMPAIGNS
-    ========================= */
+const userId=
+userData.userId||
+userData.id||
+3;
 
-    const campaignRes =
-      await fetch(
-        `${BASE_URL}/GetUserCampaigns/${userId}`
-      );
 
-    if (!campaignRes.ok) {
+const campaignRes=
+await fetch(
+`${BASE_URL}/GetUserCampaigns/${userId}`
+);
 
-      throw new Error(
-        "Gagal ambil campaign"
-      );
 
-    }
+if(!campaignRes.ok){
 
-    const result =
-    await campaignRes.json();
+throw new Error(
+"Gagal ambil campaign"
+);
 
-    console.log(result);
+}
 
-    const campaigns =
-      result.$values ||
-      result.data ||
-      result;
 
-    console.log("CAMPAIGNS:", campaigns);
+const result=
+await campaignRes.json();
 
-    if (!Array.isArray(campaigns) || campaigns.length === 0) {
 
-      alert("Campaign kosong");
+const campaigns=
+normalizeArray(result);
 
-      return;
 
-    }
+console.log(
+"Campaign:",
+campaigns
+);
 
-    /* =========================
-       INIT
-    ========================= */
 
-    let totalRevenue = 0;
-    let totalSpend = 0;
+if(campaigns.length===0){
 
-    const chartMap = {};
+alert(
+"Campaign kosong"
+);
 
-    const tbody =
-      document.querySelector(
-        ".campaign-table tbody"
-      );
+return;
 
-    tbody.innerHTML = "";
+}
 
-    const targetRoasList =
-      document.getElementById(
-        "targetRoasList"
-      );
 
-    if (targetRoasList) {
+let totalRevenue=0;
+let totalSpend=0;
 
-      targetRoasList.innerHTML = "";
+const chartMap={};
 
-    }
 
-    /* =========================
-       LOOP CAMPAIGNS
-    ========================= */
+const channelTotals={
 
-    for (const campaign of campaigns) {
+1:{
+revenue:0,
+spend:0
+},
 
-      try {
+2:{
+revenue:0,
+spend:0
+},
 
-        const campaignId =
-          campaign.campaign_id ||
-          campaign.campaignId;
+3:{
+revenue:0,
+spend:0
+}
 
-        console.log(
-          "PROCESS CAMPAIGN:",
-          campaignId
-        );
+};
 
-        const [perfRes, roasRes] =
-          await Promise.all([
 
-            fetch(
-              `${BASE_URL}/PerformanceReport/${campaignId}`
-            ),
+const tbody=
+document.querySelector(
+".campaign-table tbody"
+);
 
-            fetch(
-              `${BASE_URL}/roas/${campaignId}`
-            )
+tbody.innerHTML="";
 
-          ]);
 
-        let perfData = {
-          performance: [],
-          campaign: campaign
-        };
+const targetRoasList=
+document.getElementById(
+"targetRoasList"
+);
 
-        let roasData = {
-          roas: 0
-        };
+targetRoasList.innerHTML="";
 
-        if (perfRes.ok) {
-          perfData = await perfRes.json();
-        } else {
-          console.log("Performance error:", campaignId);
-        }
 
-        if (roasRes.ok) {
-          roasData = await roasRes.json();
-        } else {
-          console.log("ROAS error:", campaignId);
-        }
-        console.log(perfData);
-        console.log(roasData);
+/* =========================
+   LOOP CAMPAIGN
+========================= */
 
-        const performance =
-          perfData.performance?.$values ||
-          perfData.performance ||
-          [];
+for(const campaign of campaigns){
 
-          /* =========================
-            PLATFORM
-          ========================= */
+try{
 
-          const platformId =
+const campaignId=
+getVal(
+campaign,
+[
+"campaign_id",
+"campaignId"
+],
+null
+);
 
-            perfData.campaign?.platformId ||
 
-            perfData.campaign?.platform_id ||
+if(!campaignId)
+continue;
 
-            campaign.platformId ||
 
-            campaign.platform_id ||
+const platformId=
+Number(
+getVal(
+campaign,
+[
+"platform_id",
+"platformId"
+],
+1
+)
+);
 
-            1;
 
-          const campaignRevenue =
-          Number(
-            campaign.target_income ||
-            campaign.targetIncome
-          ) || 0;
+const campaignName=
+getVal(
+campaign,
+[
+"nama_campaign",
+"namaCampaign"
+],
+"Campaign"
+);
 
-        const campaignSpend =
-          Number(campaign.budget) || 0;
 
-        const actualRevenue =
-          performance.reduce(
-            (sum, item) =>
-              sum + (Number(item.revenue) || 0),
-            0
-          );
+const budget=
+Number(
+getVal(
+campaign,
+[
+"budget"
+],
+0
+)
+);
 
-        totalRevenue += actualRevenue;
-        totalSpend += campaignSpend;
 
-        performance.forEach(item => {
+const targetRevenue=
+Number(
+getVal(
+campaign,
+[
+"target_income",
+"targetIncome"
+],
+0
+)
+);
 
-          const revenue =
-            Number(item.revenue) || 0;
 
-          const cost =
-            Number(item.cost) || 0;
 
-          const tanggal =
-            item.tanggal || "-";
+let perfData=[];
+let roasData={};
 
-          if (!channelTotals[platformId]) {
 
-            channelTotals[platformId] = {
+try{
 
-              revenue: 0,
-              spend: 0
+const perfRes=
+await fetch(
+`${BASE_URL}/PerformanceReport/${campaignId}`
+);
 
-            };
+if(perfRes.ok){
 
-          }
+perfData=
+await perfRes.json();
 
-          channelTotals[platformId].revenue += revenue;
+}
 
-          channelTotals[platformId].spend += cost;
+}catch(err){
 
-          if (!chartMap[tanggal]) {
+console.log(err);
 
-            chartMap[tanggal] = {
+}
 
-              revenue: 0,
-              spend: 0
 
-            };
+try{
 
-          }
+const roasRes=
+await fetch(
+`${BASE_URL}/roas/${campaignId}`
+);
 
-  chartMap[tanggal].revenue += revenue;
-  chartMap[tanggal].spend += cost;
+if(roasRes.ok){
 
-});
+roasData=
+await roasRes.json();
 
-       
-        /* =========================
-           TABLE
-        ========================= */
+}
 
-        const tr =
-          document.createElement("tr");
+}catch(err){
 
-        tr.innerHTML = `
+console.log(err);
 
-          <td>
+}
 
-            <div class="camp-name">
-              ${campaign.nama_campaign || campaign.namaCampaign || "-"}
 
-            </div>
 
-            <div class="camp-sub">
+const performance=
+normalizeArray(
+perfData
+);
 
-              Campaign ID :
-              ${campaignId}
 
-            </div>
+const actualRevenue=
+performance.reduce(
 
-          </td>
+(sum,item)=>
 
-          <td>
+sum+
+Number(
+item.revenue||0
+)
 
-            <span class="channel-badge ${
-              badgeClassMap[platformId] || ""
-            }">
+,0
 
-              ${platformMap[platformId] || "Unknown"}
+);
 
-            </span>
 
-          </td>
 
-          <td>
-            Rp ${campaignSpend.toLocaleString("id-ID")}
-          </td>
+totalRevenue+=
+actualRevenue;
 
-          <td>
-            Rp ${campaignRevenue.toLocaleString("id-ID")}
-          </td>
+totalSpend+=
+budget;
 
-          <td class="revenue-green">
-            Rp ${actualRevenue.toLocaleString("id-ID")}
-          </td>
 
-         <td>
 
-            ${campaignSpend > 0
+channelTotals[platformId]
+.revenue+=
+actualRevenue;
 
-              ? (
-                  actualRevenue /
-                  campaignSpend
-                ).toFixed(2)
 
-              : 0}x
+channelTotals[platformId]
+.spend+=
+budget;
 
-          </td>
 
-          <td class="roas-orange">
 
-            ${Number(
-              roasData.roas || 0
-            ).toFixed(2)}x
+performance.forEach(
 
-          </td>
+item=>{
 
-        `;
+const tanggal=
+item.tanggal||"-";
 
-        tbody.appendChild(tr);
+if(
+!chartMap[tanggal]
+){
 
-        /* =========================
-           TARGET ROAS
-        ========================= */
+chartMap[tanggal]={
 
-        const roasValue =
+revenue:0,
+spend:0
 
-        campaignSpend > 0
+};
 
-          ? actualRevenue /
-            campaignSpend
+}
 
-          : 0;
+chartMap[tanggal]
+.revenue+=
+Number(
+item.revenue||0
+);
 
-        const percent = Math.min(
 
-          (roasValue / 5) * 100,
+chartMap[tanggal]
+.spend+=
+Number(
+item.cost||0
+);
 
-          100
+}
 
-        );
+);
 
-        const targetItem =
-          document.createElement("div");
 
-        targetItem.className =
-          "troas-item";
 
-        targetItem.innerHTML = `
+const roas=
 
-          <div class="troas-header">
+budget>0
+?
+actualRevenue/
+budget
+:
+0;
 
-            <span class="troas-name">
 
-              ${
-                platformMap[platformId] ||
-                "Platform"
-              }
 
-              -
+const tr=
+document.createElement(
+"tr"
+);
 
-              ${
-                campaign.nama_campaign ||
-                campaign.namaCampaign ||
-                "Campaign"
-              }
 
-            </span>
+tr.innerHTML=`
 
-            <span class="troas-val">
+<td>
 
-              ${roasValue.toFixed(2)}x
+<div class="camp-name">
+${campaignName}
+</div>
 
-            </span>
+<div class="camp-sub">
+Campaign ID :
+${campaignId}
+</div>
 
-          </div>
+</td>
 
-          <div class="troas-bar-wrap">
+<td>
 
-            <div
+<span class="
+channel-badge
+${badgeClassMap[platformId]||""}
+">
 
-              class="troas-bar ${
-                barClassMap[platformId] || ""
-              }"
+${platformMap[platformId]}
 
-              style="width:${percent}%"
+</span>
 
-            ></div>
+</td>
 
-          </div>
+<td>
+Rp ${budget.toLocaleString("id-ID")}
+</td>
 
-        `;
+<td>
+Rp ${targetRevenue.toLocaleString("id-ID")}
+</td>
 
-        if (targetRoasList) {
+<td class="revenue-green">
+Rp ${actualRevenue.toLocaleString("id-ID")}
+</td>
 
-          targetRoasList.appendChild(
-            targetItem
-          );
+<td>
+${roas.toFixed(2)}x
+</td>
 
-        }
+<td class="roas-orange">
+${Number(
+roasData.roas||roas
+).toFixed(2)}x
+</td>
 
-      }
+`;
 
-      catch (err) {
+tbody.appendChild(
+tr
+);
 
-        console.log(
-          "ERROR CAMPAIGN:",
-          err
-        );
 
-      }
 
-    }
+const percent=
+Math.min(
+(roas/5)*100,
+100
+);
 
-    /* =========================
-       GRAPH DATA
-    ========================= */
 
-    const labels =
+const targetItem=
+document.createElement(
+"div"
+);
 
-      Object.keys(chartMap).sort();
 
-    const revenueData = labels.map(
+targetItem.className=
+"troas-item";
 
-      label =>
-        chartMap[label].revenue
 
-    );
+targetItem.innerHTML=`
 
-    const spendData = labels.map(
+<div class="troas-header">
 
-      label =>
-        chartMap[label].spend
+<span class="troas-name">
 
-    );
+${platformMap[platformId]}
+-
+${campaignName}
 
-    console.log("LABELS:", labels);
-    console.log("REVENUE:", revenueData);
-    console.log("SPEND:", spendData);
+</span>
 
-    /* =========================
-       KPI
-    ========================= */
+<span class="troas-val">
+${roas.toFixed(2)}x
+</span>
 
-    const spendEl =
-      document.querySelector(".spend-val");
+</div>
 
-    const revenueEl =
-      document.querySelector(".revenue-val");
+<div class="troas-bar-wrap">
 
-    const roasEl =
-      document.querySelector(".roas-val");
+<div
+class="troas-bar ${barClassMap[platformId]}"
+style="width:${percent}%"
+></div>
 
-    const donutCenter =
-      document.querySelector(
-        ".donut-center-val"
-      );
+</div>
 
-    if (spendEl) {
+`;
 
-      spendEl.textContent =
+targetRoasList.appendChild(
+targetItem
+);
 
-        `Rp ${totalSpend.toLocaleString("id-ID")}`;
 
-    }
+}catch(err){
 
-    if (revenueEl) {
+console.log(
+"campaign error",
+err
+);
 
-      revenueEl.textContent =
+}
 
-        `Rp ${totalRevenue.toLocaleString("id-ID")}`;
+}
 
-    }
 
-    const finalRoas =
+/* =========================
+   KPI
+========================= */
 
-      totalSpend > 0
+document.querySelector(
+".spend-val"
+).textContent=
+`Rp ${totalSpend.toLocaleString("id-ID")}`;
 
-        ? totalRevenue / totalSpend
 
-        : 0;
+document.querySelector(
+".revenue-val"
+).textContent=
+`Rp ${totalRevenue.toLocaleString("id-ID")}`;
 
-    if (roasEl) {
 
-      roasEl.textContent =
+const finalRoas=
 
-        `${finalRoas.toFixed(2)}x`;
+totalSpend>0
+?
+totalRevenue/totalSpend
+:
+0;
 
-    }
 
-    if (donutCenter) {
+document.querySelector(
+".roas-val"
+).textContent=
+`${finalRoas.toFixed(2)}x`;
 
-      donutCenter.textContent =
 
-        `${finalRoas.toFixed(2)}x`;
+document.querySelector(
+".donut-center-val"
+).textContent=
+`${finalRoas.toFixed(2)}x`;
 
-    }
 
-    /* =========================
-       ROAS PROGRESS
-    ========================= */
 
-    const roasProgress =
-      document.getElementById(
-        "roasProgress"
-      );
+/* =========================
+   UPDATE CHART
+========================= */
 
-    if (roasProgress) {
+const labels=
+Object.keys(
+chartMap
+).sort();
 
-      const progressWidth =
-        Math.min(
-          (finalRoas / 5) * 100,
-          100
-        );
 
-      roasProgress.style.width =
-        `${progressWidth}%`;
+if(labels.length===0){
 
-    }
+labels.push("-");
 
-    /* =========================
-       UPDATE AREA CHART
-    ========================= */
+chartMap["-"]={
 
-    if (areaChart) {
+revenue:0,
+spend:0
 
-      areaChart.data.labels =
-        labels;
+};
 
-      areaChart.data.datasets[0].data =
-        revenueData;
+}
 
-      areaChart.data.datasets[1].data =
-        spendData;
 
-      areaChart.update();
+const revenueData=
+labels.map(
+x=>chartMap[x].revenue
+);
 
-    }
+const spendData=
+labels.map(
+x=>chartMap[x].spend
+);
 
-    /* =========================
-          DONUT PER CHANNEL
-    ========================= */
 
-      const donutData = [];
+if(areaChart){
 
-      const donutLabels = [];
+areaChart.data.labels=
+labels;
 
-      const donutColors = [];
+areaChart.data.datasets[0]
+.data=
+revenueData;
 
-      const oldLegend =
-        document.querySelector(
-          ".donut-legend"
-        );
+areaChart.data.datasets[1]
+.data=
+spendData;
 
-      if (oldLegend) {
+areaChart.update();
 
-        oldLegend.remove();
+}
 
-      }
 
-      const donutLegend =
-        document.createElement("ul");
+}catch(err){
 
-      donutLegend.className =
-        "donut-legend";
+console.error(err);
 
-      Object.keys(channelTotals).forEach(
+alert(
+err.message
+);
 
-        key => {
-
-          const channel =
-            channelTotals[key];
-
-          const roas =
-
-            channel.spend > 0
-
-              ? channel.revenue /
-                channel.spend
-
-              : 0;
-
-          if (roas <= 0) return;
-
-          donutData.push(roas);
-
-          donutLabels.push(
-            platformMap[key]
-          );
-
-          let color = "#A78BFA";
-
-          if (Number(key) === 1) {
-
-            color = "#FBBF24";
-
-          }
-
-          else if (Number(key) === 2) {
-
-            color = "#3B82F6";
-
-          }
-
-          else if (Number(key) === 3) {
-
-            color = "#F87171";
-
-          }
-
-          donutColors.push(color);
-
-        }
-
-      );
-
-      const totalDonut =
-        donutData.reduce(
-          (a, b) => a + b,
-          0
-        );
-
-      Object.keys(channelTotals).forEach(
-
-        key => {
-
-          const channel =
-            channelTotals[key];
-
-          const roas =
-
-            channel.spend > 0
-
-              ? channel.revenue /
-                channel.spend
-
-              : 0;
-
-          if (roas <= 0) return;
-
-          const percent =
-
-            totalDonut > 0
-
-              ? (
-                  (roas / totalDonut) * 100
-                ).toFixed(0)
-
-              : 0;
-
-          const li =
-            document.createElement("li");
-
-          li.innerHTML = `
-
-            <span class="dot ${
-
-              Number(key) === 1
-                ? "instagram"
-
-              : Number(key) === 2
-                ? "tiktok"
-
-              : Number(key) === 3
-                ? "youtube"
-
-              : "tokopedia"
-
-            }"></span>
-
-            ${platformMap[key]}
-
-            <span class="legend-val ${
-
-              Number(key) === 1
-                ? "instagram-col"
-
-              : Number(key) === 2
-                ? "tiktok-col"
-
-              : Number(key) === 3
-                ? "youtube-col"
-
-              : "tokopedia-col"
-
-            }">
-
-              ${roas.toFixed(2)}x
-
-            </span>
-
-            <span class="legend-pct">
-
-              ${percent}%
-
-            </span>
-
-          `;
-
-          donutLegend.appendChild(li);
-
-        }
-
-      );
-
-      const donutWrap =
-        document.querySelector(
-          ".donut-wrap"
-        );
-
-      if (donutWrap) {
-
-        donutWrap.appendChild(
-          donutLegend
-        );
-
-      }
-
-      if (donutChart) {
-
-        donutChart.data.labels =
-          donutLabels;
-
-        donutChart.data.datasets[0].data =
-          donutData;
-
-        donutChart.data.datasets[0].backgroundColor =
-          donutColors;
-
-        donutChart.update();
-
-      }
-
-    /* =========================
-       TARGET %
-    ========================= */
-
-    const targetInput =
-      document.getElementById(
-        "targetRevenue"
-      );
-
-    const pencapaian =
-      document.getElementById(
-        "pencapaianPct"
-      );
-
-    if (targetInput && pencapaian) {
-
-      targetInput.addEventListener(
-
-        "input",
-
-        () => {
-
-          const target =
-            Number(
-              targetInput.value
-            ) || 0;
-
-          const percent =
-
-            target > 0
-
-              ? (
-                  totalRevenue / target
-                ) * 100
-
-              : 0;
-
-          pencapaian.textContent =
-            `${percent.toFixed(1)}%`;
-
-        }
-
-      );
-
-    }
-
-  }
-
-  catch (err) {
-
-    console.error(err);
-
-    alert(err.message);
-
-  }
+}
 
 }
 
 document.addEventListener(
-  "DOMContentLoaded",
-  loadDashboard
+"DOMContentLoaded",
+loadDashboard
 );
