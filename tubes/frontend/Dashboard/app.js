@@ -205,108 +205,100 @@ async function loadDashboard() {
       const roasData =
         (await safeJsonFetch(`${BASE_URL}/roas/${campaignId}`)) || {};
 
-      const campaignInfo =
-        getVal(perfData, ["campaign", "Campaign"], null) ||
-        campaignItem;
+      const campaignInfo = perfData.campaign || {};
 
-      const performance = normalizeArray(
-        getVal(perfData, ["performance", "Performance"], perfData)
-      );
+      const performance =
+        normalizeArray(perfData?.performance || perfData);
 
-      const campaignName = getVal(
-        campaignInfo,
-        ["nama_campaign", "namaCampaign", "NamaCampaign", "name", "Name"],
-        "Campaign"
-      );
+      const campaignName =
+        campaignInfo.namaCampaign || "Campaign";
 
-      const platformId = Number(
-        getVal(
-          campaignInfo,
-          ["platform_id", "platformId", "PlatformId"],
-          getVal(campaignItem, ["platform_id", "platformId", "PlatformId"], 1)
-        )
-      );
+      const platformId =
+        campaignInfo.platformId || 1;
 
-      const budget = Number(
-        getVal(campaignInfo, ["budget", "Budget"], 0)
-      );
+      const targetRevenue =
+        Number(
+          campaignInfo.targetIncome
+        ) || 0;
 
-      const targetRevenue = Number(
-        getVal(
-          campaignInfo,
-          ["target_income", "targetIncome", "TargetIncome"],
+      /* total spend dari cost */
+      const campaignSpend =
+        performance.reduce(
+          (sum,item)=>
+            sum + (Number(item.cost)||0),
           0
-        )
-      );
-
-      const actualRevenue = performance.reduce((sum, item) => {
-        return (
-          sum +
-          Number(
-            getVal(item, ["revenue", "Revenue", "income", "Income"], 0)
-          )
         );
-      }, 0);
+
+      /* total revenue */
+      const actualRevenue =
+        performance.reduce(
+          (sum,item)=>
+            sum + (Number(item.revenue)||0),
+          0
+        );
+
+        const roasValue =
+        campaignSpend > 0
+          ? actualRevenue / campaignSpend
+          : 0;
+
+      const apiRoas =
+        Number(
+          roasData.roas ??
+          roasData.Roas ??
+          roasData.ROAS ??
+          roasValue
+        );
 
       totalRevenue += actualRevenue;
-      totalSpend += budget;
+      totalSpend += campaignSpend;
 
-      if (!channelTotals[platformId]) {
-        channelTotals[platformId] = {
-          revenue: 0,
-          spend: 0
-        };
-      }
+      performance.forEach(item=>{
 
-      channelTotals[platformId].revenue += actualRevenue;
-      channelTotals[platformId].spend += budget;
+        const revenue =
+          Number(item.revenue)||0;
 
-      if (performance.length === 0) {
-        const tanggal = new Date().toISOString().split("T")[0];
+        const cost =
+          Number(item.cost)||0;
 
-        if (!chartMap[tanggal]) {
-          chartMap[tanggal] = {
-            revenue: 0,
-            spend: 0
+        const tanggal =
+          item.Tanggal || "-";
+
+        if(!channelTotals[platformId]){
+
+          channelTotals[platformId]={
+            revenue:0,
+            spend:0
           };
+
         }
 
-        chartMap[tanggal].revenue += actualRevenue;
-        chartMap[tanggal].spend += budget;
-      } else {
-        performance.forEach(item => {
-          const tanggal = getVal(
-            item,
-            ["tanggal", "Tanggal", "date", "Date"],
-            "-"
-          );
+        channelTotals[
+          platformId
+        ].revenue += revenue;
 
-          const revenue = Number(
-            getVal(item, ["revenue", "Revenue", "income", "Income"], 0)
-          );
+        channelTotals[
+          platformId
+        ].spend += cost;
 
-          const spend = Number(
-            getVal(item, ["cost", "Cost", "spend", "Spend"], 0)
-          );
+        if(!chartMap[tanggal]){
 
-          if (!chartMap[tanggal]) {
-            chartMap[tanggal] = {
-              revenue: 0,
-              spend: 0
-            };
-          }
+          chartMap[tanggal]={
+            revenue:0,
+            spend:0
+          };
 
-          chartMap[tanggal].revenue += revenue;
-          chartMap[tanggal].spend += spend;
-        });
-      }
+        }
 
-      const roasValue = budget > 0 ? actualRevenue / budget : 0;
+        chartMap[
+          tanggal
+        ].revenue += revenue;
 
-      const apiRoas = Number(
-        getVal(roasData, ["roas", "Roas", "ROAS"], roasValue)
-      );
+        chartMap[
+          tanggal
+        ].spend += cost;
 
+      });
       const tr = document.createElement("tr");
 
       tr.innerHTML = `
@@ -321,8 +313,9 @@ async function loadDashboard() {
           </span>
         </td>
 
-        <td>Rp ${budget.toLocaleString("id-ID")}</td>
-
+        <td>
+        Rp ${campaignSpend.toLocaleString("id-ID")}
+        </td>
         <td>Rp ${targetRevenue.toLocaleString("id-ID")}</td>
 
         <td class="revenue-green">
