@@ -193,7 +193,8 @@ document.querySelectorAll('.eye-btn').forEach(btn => {
 /* ══════════════════════════════════════════════════
    SUBMIT
 ══════════════════════════════════════════════════ */
-$('submitBtn').addEventListener('click', () => {
+$('submitBtn').addEventListener('click', (e) => {
+  e.preventDefault();
 
   const email = emailInput.value.trim();
   const pwd   = newPwd.value;
@@ -201,14 +202,12 @@ $('submitBtn').addEventListener('click', () => {
 
   let valid = true;
 
-  // email
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     setErr(emailInput, '✗ Masukkan email valid', emailHint);
     shake(emailInput);
     valid = false;
   }
 
-  // password
   if (!pwd || calcStrength(pwd) < 2) {
     strText.textContent = '✗ Password terlalu lemah';
     strText.style.color = 'var(--red)';
@@ -216,7 +215,6 @@ $('submitBtn').addEventListener('click', () => {
     valid = false;
   }
 
-  // confirm
   if (!conf || pwd !== conf) {
     setErr(confirmPwd, '✗ Password tidak cocok', matchText);
     shake(confirmPwd);
@@ -229,58 +227,48 @@ $('submitBtn').addEventListener('click', () => {
   btn.disabled = true;
   btn.querySelector('.btn-label').textContent = 'Processing...';
 
- fetch("https://camprentelu.azurewebsites.net/api/change-password", {
-  method: "PUT",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    email: email,
-    password: pwd
+  fetch("https://camprentelu.azurewebsites.net/api/change-password", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      email: email,
+      password: pwd
+    })
   })
-})
-.then(async response => {
+  .then(async response => {
+    const result = await response.text();
 
-  const result = await response.text();
+    console.log("STATUS:", response.status);
+    console.log("BODY:", result);
 
-  console.log("STATUS:", response.status);
-  console.log("BODY:", result);
+    btn.disabled = false;
 
-  btn.disabled = false;
+    const clean = result.trim().toLowerCase();
 
-  // ✅ EMAIL TIDAK DITEMUKAN
-  if (response.status === 404 || result === "email not found") {
+    if (response.status === 404 || clean.includes("email not found")) {
+      btn.querySelector('.btn-label').textContent = 'Make a new password';
+      setErr(emailInput, '✗ Email tidak ditemukan', emailHint);
+      shake(emailInput);
+      return;
+    }
+
+    if (response.ok && clean.includes("success")) {
+      btn.querySelector('.btn-label').textContent = 'Password berhasil diubah ✓';
+      btn.style.background = 'var(--green)';
+      btn.style.color = '#0c0c0f';
+      return;
+    }
 
     btn.querySelector('.btn-label').textContent = 'Make a new password';
+    alert("Gagal mengubah password: " + result);
+  })
+  .catch(error => {
+    btn.disabled = false;
+    btn.querySelector('.btn-label').textContent = 'Make a new password';
 
-    setErr(emailInput, '✗ Email tidak ditemukan', emailHint);
-    shake(emailInput);
-
-    return;
-  }
-
-  // ✅ SUCCESS
-  if (result === "success") {
-
-    btn.querySelector('.btn-label').textContent = 'Password berhasil diubah ✓';
-    btn.style.background = 'var(--green)';
-    btn.style.color = '#0c0c0f';
-
-    return;
-  }
-
-  // ❌ FALLBACK ERROR
-  alert("Gagal mengubah password");
-
-})
-.catch(error => {
-
-  btn.disabled = false;
-  btn.querySelector('.btn-label').textContent = 'Make a new password';
-
-  console.log("ERROR:", error);
-  alert("Server error");
-
-});
-
+    console.log("ERROR:", error);
+    alert("Server error");
+  });
 });
