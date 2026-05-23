@@ -230,7 +230,7 @@ $('submitBtn').addEventListener('click', () => {
   btn.querySelector('.btn-label').textContent = 'Processing...';
 
  fetch("https://camprentelu.azurewebsites.net/api/change-password", {
-  method: "POST",
+  method: "PUT",
   headers: {
     "Content-Type": "application/json"
   },

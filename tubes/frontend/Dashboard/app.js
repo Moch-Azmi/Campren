@@ -415,18 +415,34 @@ async function loadDashboard() {
     }
 
     const roasProgress = document.getElementById("roasProgress");
-
+    updateAreaChart(chartMap);
     if (roasProgress) {
       roasProgress.style.width =
         `${Math.min((finalRoas / 5) * 100, 100)}%`;
     }
 
-    if (areaChart) {
-      areaChart.data.labels = labels;
-      areaChart.data.datasets[0].data = revenueData;
-      areaChart.data.datasets[1].data = spendData;
-      areaChart.update();
-    }
+  function updateAreaChart(chartMap) {
+  const labels = Object.keys(chartMap).sort();
+
+  if (labels.length === 0) {
+    labels.push("-");
+    chartMap["-"] = {
+      revenue: 0,
+      spend: 0
+    };
+  }
+
+  const revenueData = labels.map(label => chartMap[label].revenue);
+  const spendData = labels.map(label => chartMap[label].spend);
+
+  if (areaChart) {
+    areaChart.data.labels = labels;
+    areaChart.data.datasets[0].data = revenueData;
+    areaChart.data.datasets[1].data = spendData;
+
+    areaChart.update();
+  }
+}
 
     updateDonutChart(channelTotals);
 
@@ -450,7 +466,7 @@ async function loadDashboard() {
     console.error(err);
     alert(err.message);
   }
-}
+
 
 function updateDonutChart(channelTotals) {
   const donutData = [];
@@ -534,4 +550,11 @@ function updateDonutChart(channelTotals) {
   }
 }
 
-document.addEventListener("DOMContentLoaded", loadDashboard);
+document.addEventListener("DOMContentLoaded", () => {
+  loadDashboard();
+
+  setInterval(() => {
+    loadDashboard();
+  }, 5000);
+});
+}
