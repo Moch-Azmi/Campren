@@ -517,5 +517,4 @@ function updateDonutChart(channelTotals) {
 
 document.addEventListener("DOMContentLoaded", () => {
   loadDashboard();
-  setInterval(loadDashboard, 5000);
 });
