@@ -181,7 +181,10 @@ async function loadDashboard() {
     );
 
     const campaigns = normalizeArray(campaignListResult);
-
+    console.log("USER DATA:", userData);
+    console.log("USER ID:", userId);
+    console.log("CAMPAIGN RESULT:", campaignListResult);
+    console.log("CAMPAIGNS:", campaigns);
     console.log("CAMPAIGNS:", campaigns);
 
     if (campaigns.length === 0) {
@@ -279,8 +282,7 @@ async function loadDashboard() {
         const cost =
           Number(item.cost)||0;
 
-        const tanggal =
-          item.Tanggal || "-";
+        const tanggal = item.tanggal || item.Tanggal || "-";
 
         if(!channelTotals[platformId]){
 
@@ -415,34 +417,6 @@ async function loadDashboard() {
     }
 
     const roasProgress = document.getElementById("roasProgress");
-    updateAreaChart(chartMap);
-    if (roasProgress) {
-      roasProgress.style.width =
-        `${Math.min((finalRoas / 5) * 100, 100)}%`;
-    }
-
-  function updateAreaChart(chartMap) {
-  const labels = Object.keys(chartMap).sort();
-
-  if (labels.length === 0) {
-    labels.push("-");
-    chartMap["-"] = {
-      revenue: 0,
-      spend: 0
-    };
-  }
-
-  const revenueData = labels.map(label => chartMap[label].revenue);
-  const spendData = labels.map(label => chartMap[label].spend);
-
-  if (areaChart) {
-    areaChart.data.labels = labels;
-    areaChart.data.datasets[0].data = revenueData;
-    areaChart.data.datasets[1].data = spendData;
-
-    areaChart.update();
-  }
-}
 
     updateDonutChart(channelTotals);
 
@@ -461,12 +435,28 @@ async function loadDashboard() {
         pencapaian.textContent = `${percent.toFixed(1)}%`;
       });
     }
-
   } catch (err) {
     console.error(err);
     alert(err.message);
   }
+} 
 
+
+function updateAreaChart(chartMap) {
+  const labels = Object.keys(chartMap).sort();
+
+  if (labels.length === 0) {
+    labels.push("-");
+    chartMap["-"] = { revenue: 0, spend: 0 };
+  }
+
+  if (areaChart) {
+    areaChart.data.labels = labels;
+    areaChart.data.datasets[0].data = labels.map(l => chartMap[l].revenue);
+    areaChart.data.datasets[1].data = labels.map(l => chartMap[l].spend);
+    areaChart.update();
+  }
+}
 
 function updateDonutChart(channelTotals) {
   const donutData = [];
@@ -474,21 +464,14 @@ function updateDonutChart(channelTotals) {
   const donutColors = [];
 
   const oldLegend = document.querySelector(".donut-legend");
-
-  if (oldLegend) {
-    oldLegend.remove();
-  }
+  if (oldLegend) oldLegend.remove();
 
   const donutLegend = document.createElement("ul");
   donutLegend.className = "donut-legend";
 
   Object.keys(channelTotals).forEach(key => {
     const channel = channelTotals[key];
-
-    const roas =
-      channel.spend > 0
-        ? channel.revenue / channel.spend
-        : 0;
+    const roas = channel.spend > 0 ? channel.revenue / channel.spend : 0;
 
     if (roas <= 0) return;
 
@@ -496,7 +479,6 @@ function updateDonutChart(channelTotals) {
     donutLabels.push(platformMap[key] || "Unknown");
 
     let color = "#A78BFA";
-
     if (Number(key) === 1) color = "#FBBF24";
     else if (Number(key) === 2) color = "#3B82F6";
     else if (Number(key) === 3) color = "#F87171";
@@ -504,57 +486,36 @@ function updateDonutChart(channelTotals) {
     donutColors.push(color);
 
     const li = document.createElement("li");
-
     li.innerHTML = `
       <span class="dot ${
-        Number(key) === 1
-          ? "instagram"
-          : Number(key) === 2
-          ? "tiktok"
-          : "youtube"
+        Number(key) === 1 ? "instagram" :
+        Number(key) === 2 ? "tiktok" :
+        "youtube"
       }"></span>
-
       ${platformMap[key] || "Unknown"}
-
       <span class="legend-val ${
-        Number(key) === 1
-          ? "instagram-col"
-          : Number(key) === 2
-          ? "tiktok-col"
-          : "youtube-col"
-      }">
-        ${roas.toFixed(2)}x
-      </span>
+        Number(key) === 1 ? "instagram-col" :
+        Number(key) === 2 ? "tiktok-col" :
+        "youtube-col"
+      }">${roas.toFixed(2)}x</span>
     `;
 
     donutLegend.appendChild(li);
   });
 
   const donutWrap = document.querySelector(".donut-wrap");
-
-  if (donutWrap) {
-    donutWrap.appendChild(donutLegend);
-  }
+  if (donutWrap) donutWrap.appendChild(donutLegend);
 
   if (donutChart) {
-    donutChart.data.labels =
-      donutLabels.length > 0 ? donutLabels : ["No Data"];
-
-    donutChart.data.datasets[0].data =
-      donutData.length > 0 ? donutData : [1];
-
+    donutChart.data.labels = donutLabels.length > 0 ? donutLabels : ["No Data"];
+    donutChart.data.datasets[0].data = donutData.length > 0 ? donutData : [1];
     donutChart.data.datasets[0].backgroundColor =
       donutColors.length > 0 ? donutColors : ["#1E293B"];
-
     donutChart.update();
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   loadDashboard();
-
-  setInterval(() => {
-    loadDashboard();
-  }, 5000);
+  setInterval(loadDashboard, 5000);
 });
-}
