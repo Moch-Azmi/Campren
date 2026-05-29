@@ -188,9 +188,26 @@ async function loadDashboard() {
     console.log("CAMPAIGNS:", campaigns);
 
     if (campaigns.length === 0) {
-      alert("Campaign kosong");
-      return;
-    }
+    const tbody = document.querySelector(".campaign-table tbody");
+    const targetRoasList = document.getElementById("targetRoasList");
+
+    if (tbody) tbody.innerHTML = "";
+    if (targetRoasList) targetRoasList.innerHTML = "";
+
+    document.querySelector(".spend-val").textContent = "Rp 0";
+    document.querySelector(".revenue-val").textContent = "Rp 0";
+    document.querySelector(".roas-val").textContent = "0.00x";
+    document.querySelector(".donut-center-val").textContent = "0.00x";
+
+    updateAreaChart({});
+    updateDonutChart({
+      1: { revenue: 0, spend: 0 },
+      2: { revenue: 0, spend: 0 },
+      3: { revenue: 0, spend: 0 }
+    });
+
+    return;
+  }
 
     let totalRevenue = 0;
     let totalSpend = 0;
@@ -418,6 +435,7 @@ async function loadDashboard() {
 
     const roasProgress = document.getElementById("roasProgress");
 
+    updateAreaChart(chartMap);
     updateDonutChart(channelTotals);
 
     const targetInput = document.getElementById("targetRevenue");
