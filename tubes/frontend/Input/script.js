@@ -312,7 +312,7 @@ const payload = {
   try {
 
     const response = await fetch(
-      'https://camprentelu.azurewebsites.net/api/campaign',
+      'https://camprentelyu.azurewebsites.net/api/campaign',
       {
         method: 'POST',
 

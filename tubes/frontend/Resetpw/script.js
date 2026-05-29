@@ -227,7 +227,7 @@ $('submitBtn').addEventListener('click', (e) => {
   btn.disabled = true;
   btn.querySelector('.btn-label').textContent = 'Processing...';
 
-  fetch("https://camprentelu.azurewebsites.net/api/change-password", {
+  fetch("https://camprentelyu.azurewebsites.net/api/change-password", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json"

@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
 
             const res = await fetch(
-                "https://camprentelu.azurewebsites.net/api/login",
+                "https://camprentelyu.azurewebsites.net/api/login",
                 {
                     method: "POST",
 

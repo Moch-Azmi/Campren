@@ -61,7 +61,7 @@ signupBtn.addEventListener('click', () => {
   btnText.textContent = "Loading...";
   btnLoader.classList.add('show');
 
-  fetch("https://camprentelu.azurewebsites.net/api/register", {
+  fetch("https://camprentelyu.azurewebsites.net/api/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
