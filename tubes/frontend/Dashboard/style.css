@@ -737,3 +737,75 @@ body {
   background: #232633;
   color: #ffffff;
 }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.export-btn {
+  border: none;
+  outline: none;
+
+  height: 42px;
+  padding: 0 18px;
+
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  cursor: pointer;
+
+  background: linear-gradient(
+    135deg,
+    #3B82F6,
+    #6D28D9
+  );
+
+  color: white;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  transition: all .2s ease;
+}
+
+.export-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(59,130,246,.25);
+}
+
+.export-btn:active {
+  transform: scale(.98);
+}
+
+.export-btn svg {
+  flex-shrink: 0;
+}
+
+.user-avatar {
+  width: 42px;
+  height: 42px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: var(--bg-card);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--text-primary);
+
+  cursor: pointer;
+
+  transition: .2s ease;
+}
+
+.user-avatar:hover {
+  background: #232633;
+}
