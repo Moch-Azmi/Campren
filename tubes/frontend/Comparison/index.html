@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAMPREN - Target vs Aktual</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-icon">C</div>
+    <h2>CAMPREN</h2>
+  </div>
+
+  <nav>
+    <a href="../Dashboard/index.html">Dashboard</a>
+    <a href="../InputData/index.html">Input Data</a>
+    <a href="../TrackingChannel/index.html">Tracking Channel</a>
+    <a class="active" href="#">Comparison</a>
+    <a href="../Export/index.html">Export</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div>
+      <h1>Comparison Data</h1>
+      <p>Perbandingan target dan data aktual campaign</p>
+    </div>
+
+    <button class="export-btn" onclick="window.location.href='../Export/index.html'">
+      Export Report
+    </button>
+  </header>
+
+  <section class="cards">
+    <div class="card">
+      <p>Total Target Revenue</p>
+      <h2 id="targetRevenue">Rp0</h2>
+    </div>
+    <div class="card">
+      <p>Total Aktual Revenue</p>
+      <h2 id="actualRevenue">Rp0</h2>
+    </div>
+    <div class="card">
+      <p>Pencapaian</p>
+      <h2 id="achievement">0%</h2>
+    </div>
+    <div class="card">
+      <p>Status</p>
+      <h2 id="statusText">-</h2>
+    </div>
+  </section>
+
+  <section class="content-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Target vs Aktual Revenue</h3>
+        <p>Per campaign</p>
+      </div>
+      <canvas id="comparisonChart"></canvas>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Progress Target</h3>
+        <p>Seberapa dekat aktual ke target</p>
+      </div>
+
+      <div id="progressList" class="progress-list"></div>
+    </div>
+  </section>
+
+  <section class="panel table-panel">
+    <div class="panel-header">
+      <h3>Detail Comparison</h3>
+      <p>Data target dan aktual lengkap</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Campaign</th>
+          <th>Channel</th>
+          <th>Target Revenue</th>
+          <th>Aktual Revenue</th>
+          <th>Selisih</th>
+          <th>Pencapaian</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="comparisonTable"></tbody>
+    </table>
+  </section>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
