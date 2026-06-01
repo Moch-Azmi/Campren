@@ -2,6 +2,7 @@ const BASE_URL = "https://camprentelu.azurewebsites.net/api";
 
 let reportData = [];
 let filteredData = [];
+let isLoaded = false;
 
 function getUserId() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -28,18 +29,6 @@ function getChannelName(platformId) {
   return map[platformId] || "Unknown";
 }
 
-function getCampaignName(campaign) {
-  return campaign.namaCampaign || campaign.campaignName || campaign.name || "Campaign Tanpa Nama";
-}
-
-function normalizePerformance(raw) {
-  if (Array.isArray(raw)) return raw;
-  if (Array.isArray(raw.performance)) return raw.performance;
-  if (Array.isArray(raw.performanceMetrics)) return raw.performanceMetrics;
-  if (Array.isArray(raw.data)) return raw.data;
-  return [];
-}
-
 async function fetchJson(url) {
   const res = await fetch(url);
 
@@ -48,35 +37,6 @@ async function fetchJson(url) {
   }
 
   return await res.json();
-}
-
-function getRevenue(item) {
-  return Number(
-    item.revenue ||
-    item.income ||
-    item.actualRevenue ||
-    item.totalRevenue ||
-    0
-  );
-}
-
-function getSpend(item) {
-  return Number(
-    item.cost ||
-    item.spend ||
-    item.adSpend ||
-    item.totalSpend ||
-    item.budgetUsed ||
-    0
-  );
-}
-
-function getViews(item) {
-  return Number(item.views || item.view || item.impression || item.impressions || 0);
-}
-
-function getClicks(item) {
-  return Number(item.clicks || item.click || 0);
 }
 
 function getStatus(roas) {
@@ -94,58 +54,89 @@ function getStatusClass(status) {
 async function loadReportData() {
   const userId = getUserId();
 
+  console.log("USER ID:", userId);
+
   const campaigns = await fetchJson(`${BASE_URL}/GetUserCampaigns/${userId}`);
+
+  console.log("CAMPAIGNS:", campaigns);
 
   const result = [];
 
-  for (const campaign of campaigns) {
-    const campaignId = campaign.campaignId || campaign.id;
+  for (const item of campaigns) {
+    const campaignId = item.campaignId || item.id;
+
     if (!campaignId) continue;
 
+    const report = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
+
+    console.log(`REPORT ${campaignId}:`, report);
+
+    const campaign = report.campaign;
+    const performance = report.performance || [];
+
+    if (!campaign) continue;
+
+    const spend = performance.reduce((sum, p) => {
+      return sum + Number(p.cost || 0);
+    }, 0);
+
+    const revenue = performance.reduce((sum, p) => {
+      return sum + Number(p.revenue || 0);
+    }, 0);
+
+    const impressions = performance.reduce((sum, p) => {
+      return sum + Number(p.impression || p.impressions || 0);
+    }, 0);
+
+    const clicks = performance.reduce((sum, p) => {
+      return sum + Number(p.clicks || 0);
+    }, 0);
+
+    const conversions = performance.reduce((sum, p) => {
+      return sum + Number(p.conversions || 0);
+    }, 0);
+
+    let roas = spend > 0 ? revenue / spend : 0;
+    let ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
+    let cpc = clicks > 0 ? spend / clicks : 0;
+
     try {
-      const performanceRaw = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
-      const performanceList = normalizePerformance(performanceRaw);
-      const reportCampaign = performanceRaw.campaign || campaign;
+      const metrics = await fetchJson(`${BASE_URL}/roas/${campaignId}`);
 
-      const spend = performanceList.reduce((sum, item) => sum + getSpend(item), 0);
-      const revenue = performanceList.reduce((sum, item) => sum + getRevenue(item), 0);
-      const views = performanceList.reduce((sum, item) => sum + getViews(item), 0);
-      const clicks = performanceList.reduce((sum, item) => sum + getClicks(item), 0);
+      console.log(`METRICS ${campaignId}:`, metrics);
 
-      let roas = spend > 0 ? revenue / spend : 0;
-
-      try {
-        const roasRaw = await fetchJson(`${BASE_URL}/roas/${campaignId}`);
-        roas = Number(roasRaw.roas || roasRaw.value || roasRaw || roas);
-      } catch {
-        console.warn(`ROAS API campaign ${campaignId} gagal, pakai hitungan manual.`);
-      }
-
-      const ctr = views > 0 ? (clicks / views) * 100 : 0;
-
-      result.push({
-        campaignId,
-        campaign: getCampaignName(reportCampaign),
-        channel: getChannelName(reportCampaign.platformId || campaign.platformId),
-        budget: Number(reportCampaign.budget || campaign.budget || 0),
-        targetRevenue: Number(reportCampaign.targetIncome || reportCampaign.targetRevenue || campaign.targetIncome || campaign.targetRevenue || 0),
-        spend,
-        revenue,
-        views,
-        clicks,
-        ctr,
-        roas,
-        status: getStatus(roas),
-        date: reportCampaign.tanggalMulai || campaign.tanggalMulai || campaign.startDate || ""
-      });
-
+      roas = Number(metrics.roas ?? roas);
+      ctr = Number(metrics.ctr ?? ctr);
+      cpc = Number(metrics.cpc ?? cpc);
     } catch (err) {
-      console.error(`Gagal ambil PerformanceReport campaign ${campaignId}:`, err);
+      console.warn(`Metrics API gagal untuk campaign ${campaignId}, pakai hitungan manual.`);
     }
+
+    result.push({
+      campaignId,
+      campaign: campaign.namaCampaign || "Campaign Tanpa Nama",
+      channel: getChannelName(campaign.platformId),
+      targetViews: Number(campaign.targetViews || 0),
+      targetClicks: Number(campaign.targetClicks || 0),
+      targetIncome: Number(campaign.targetIncome || 0),
+      spend,
+      revenue,
+      impressions,
+      clicks,
+      conversions,
+      roas,
+      ctr,
+      cpc,
+      status: getStatus(roas),
+      date: performance[0]?.tanggal || ""
+    });
   }
 
   reportData = result;
   filteredData = [...reportData];
+  isLoaded = true;
+
+  console.log("FINAL REPORT DATA:", reportData);
 
   renderKPI(filteredData);
   renderTable(filteredData);
@@ -170,8 +161,8 @@ function renderTable(data) {
   if (!data.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="10" class="empty">
-          Data laporan kosong. Kalau campaign ada tapi kosong, berarti PerformanceReport-nya belum ngasih data.
+        <td colspan="12" class="empty">
+          Data laporan kosong. Campaign ada, tapi report gagal kebaca.
         </td>
       </tr>
     `;
@@ -186,13 +177,14 @@ function renderTable(data) {
     row.innerHTML = `
       <td>${item.campaign}</td>
       <td>${item.channel}</td>
-      <td>${formatRupiah(item.budget)}</td>
-      <td>${formatRupiah(item.targetRevenue)}</td>
+      <td>${formatRupiah(item.targetIncome)}</td>
       <td>${formatRupiah(item.spend)}</td>
       <td>${formatRupiah(item.revenue)}</td>
-      <td>${item.views.toLocaleString("id-ID")}</td>
+      <td>${item.impressions.toLocaleString("id-ID")}</td>
       <td>${item.clicks.toLocaleString("id-ID")}</td>
+      <td>${item.conversions.toLocaleString("id-ID")}</td>
       <td>${item.ctr.toFixed(2)}%</td>
+      <td>${formatRupiah(item.cpc)}</td>
       <td>${item.roas.toFixed(2)}x</td>
       <td>
         <span class="badge ${statusClass}">
@@ -237,8 +229,13 @@ function resetFilter() {
 }
 
 function exportReport(type) {
+  if (!isLoaded) {
+    alert("Data masih loading. Tunggu dulu, jangan barbar klik tombol.");
+    return;
+  }
+
   if (!filteredData.length) {
-    alert("Data kosong. Mau export apa, kesedihan?");
+    alert("Data kosong. Cek console FINAL REPORT DATA.");
     return;
   }
 
@@ -254,13 +251,14 @@ function exportCSV(type) {
   const header = [
     "Campaign",
     "Channel",
-    "Budget",
-    "Target Revenue",
+    "Target Income",
     "Spend",
     "Revenue",
-    "Views",
+    "Impressions",
     "Clicks",
+    "Conversions",
     "CTR",
+    "CPC",
     "ROAS",
     "Status"
   ];
@@ -268,13 +266,14 @@ function exportCSV(type) {
   const rows = filteredData.map(item => [
     item.campaign,
     item.channel,
-    item.budget,
-    item.targetRevenue,
+    item.targetIncome,
     item.spend,
     item.revenue,
-    item.views,
+    item.impressions,
     item.clicks,
+    item.conversions,
     `${item.ctr.toFixed(2)}%`,
+    item.cpc.toFixed(2),
     `${item.roas.toFixed(2)}x`,
     item.status
   ]);
@@ -306,12 +305,14 @@ function goBack() {
 
 document.addEventListener("DOMContentLoaded", () => {
   loadReportData().catch(err => {
-    console.error("Export Report Error:", err);
+    console.error("EXPORT ERROR:", err);
+
+    isLoaded = true;
 
     document.getElementById("reportTable").innerHTML = `
       <tr>
-        <td colspan="10" class="empty">
-          Gagal load data dari API. Cek BASE_URL, CORS, endpoint, atau backend lu lagi ngambek.
+        <td colspan="12" class="empty">
+          Gagal load data dari API. Cek console, jangan nebak-nebak kayak dukun frontend.
         </td>
       </tr>
     `;
