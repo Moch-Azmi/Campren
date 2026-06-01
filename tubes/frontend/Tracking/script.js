@@ -24,13 +24,15 @@ function formatRupiah(value) {
 }
 
 function getChannelName(platformId) {
+  const id = Number(platformId);
+
   const map = {
     1: "Instagram",
     2: "Youtube",
     3: "Tiktok",
   };
 
-  return map[platformId] || "Unknown";
+  return map[id] || "Unknown";
 }
 
 function getStatus(item) {
@@ -101,10 +103,32 @@ async function loadTrackingData() {
       const targetRoas = adSpend > 0 ? targetRevenue / adSpend : 0;
       const roas = getRoasValue(roasRaw);
 
+      console.log("Campaign:", campaign);
+      console.log("Item:", item);
+      console.log("Platform ID kebaca:", 
+        campaign.platformId ||
+        campaign.PlatformID ||
+        campaign.platformID ||
+        campaign.platform_id ||
+        item.platformId ||
+        item.PlatformID ||
+        item.platformID ||
+        item.platform_id
+      );
+      
       trackingData.push({
         campaign: campaign.namaCampaign || campaign.name || "-",
         product: "-",
-        channel: getChannelName(campaign.platformId),
+        channel: getChannelName(
+          campaign.platformId ||
+          campaign.PlatformID ||
+          campaign.platformID ||
+          campaign.platform_id ||
+          item.platformId ||
+          item.PlatformID ||
+          item.platformID ||
+          item.platform_id
+        ),
         adSpend,
         targetRevenue,
         revenue,
