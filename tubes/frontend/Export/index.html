@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAMPREN - Export Report</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <main class="page">
+
+    <header class="header">
+      <div>
+        <h1>Export Report</h1>
+        <p>Generate dan download laporan campaign performance.</p>
+      </div>
+
+      <button class="back-btn" onclick="goBack()">
+        ← Kembali ke Overview
+      </button>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <span>Total Campaign</span>
+        <h2 id="totalCampaign">0</h2>
+      </div>
+
+      <div class="kpi-card">
+        <span>Total Revenue</span>
+        <h2 id="totalRevenue">Rp 0</h2>
+      </div>
+
+      <div class="kpi-card">
+        <span>Total Spend</span>
+        <h2 id="totalSpend">Rp 0</h2>
+      </div>
+
+      <div class="kpi-card">
+        <span>Average ROAS</span>
+        <h2 id="avgRoas">0x</h2>
+      </div>
+    </section>
+
+    <section class="filter-card">
+      <div>
+        <h3>Filter Laporan</h3>
+        <p>Pilih data yang mau dimasukin ke laporan.</p>
+      </div>
+
+      <div class="filter-grid">
+        <select id="channelFilter">
+          <option value="all">Semua Channel</option>
+          <option value="Tokopedia">Tokopedia</option>
+          <option value="Youtube">Youtube</option>
+          <option value="Google">Google</option>
+          <option value="Tiktok">Tiktok</option>
+          <option value="Instagram">Instagram</option>
+        </select>
+
+        <select id="statusFilter">
+          <option value="all">Semua Status</option>
+          <option value="Good">Good</option>
+          <option value="Warning">Warning</option>
+          <option value="Bad">Bad</option>
+        </select>
+
+        <input type="date" id="startDate" />
+        <input type="date" id="endDate" />
+
+        <button onclick="applyFilter()">Apply</button>
+        <button class="ghost-btn" onclick="resetFilter()">Reset</button>
+      </div>
+    </section>
+
+    <section class="export-grid">
+      <div class="export-card">
+        <h3>PDF Report</h3>
+        <p>Laporan siap print dengan ringkasan KPI dan tabel campaign.</p>
+        <button onclick="exportReport('PDF')">Export PDF</button>
+      </div>
+
+      <div class="export-card">
+        <h3>Excel Report</h3>
+        <p>Format spreadsheet buat analisis data lanjutan.</p>
+        <button onclick="exportReport('Excel')">Export Excel</button>
+      </div>
+
+      <div class="export-card">
+        <h3>CSV Report</h3>
+        <p>Data mentah yang gampang dipakai ulang.</p>
+        <button onclick="exportReport('CSV')">Export CSV</button>
+      </div>
+    </section>
+
+    <section class="table-card">
+      <div class="table-head">
+        <div>
+          <h3>Preview Report</h3>
+          <p>Data yang akan diexport. Jangan export kosong, itu namanya seni gagal.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Campaign</th>
+              <th>Channel</th>
+              <th>Spend</th>
+              <th>Revenue</th>
+              <th>ROAS</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="reportTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

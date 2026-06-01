@@ -1,73 +1,319 @@
-const comparisonData = [
-  {
-    campaign: "Ramadhan Sale",
-    channel: "Tokopedia",
-    targetRevenue: 4000000,
-    actualRevenue: 5200000
-  },
-  {
-    campaign: "Christmas Sale",
-    channel: "Instagram",
-    targetRevenue: 3500000,
-    actualRevenue: 2800000
-  },
-  {
-    campaign: "Flash Sale Gadget",
-    channel: "TikTok",
-    targetRevenue: 6000000,
-    actualRevenue: 6100000
-  },
-  {
-    campaign: "Promo Akhir Bulan",
-    channel: "YouTube",
-    targetRevenue: 5000000,
-    actualRevenue: 3900000
-  }
-];
+const BASE_URL = "https://camprentelyu.azurewebsites.net/api";
 
-const formatRupiah = (value) => {
-  return "Rp" + value.toLocaleString("id-ID");
+const channelColors = {
+  Tokopedia: "#8b5cf6",
+  Tiktok: "#3b82f6",
+  TikTok: "#3b82f6",
+  Instagram: "#ec4899",
+  Youtube: "#ef4444",
+  YouTube: "#ef4444",
+  Google: "#22c55e",
+  Unknown: "#71717a"
 };
 
-function loadSummary() {
-  const totalTarget = comparisonData.reduce((sum, item) => sum + item.targetRevenue, 0);
-  const totalActual = comparisonData.reduce((sum, item) => sum + item.actualRevenue, 0);
-  const achievement = totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0;
+let comparisonRevenueChart = null;
+let achievementChart = null;
+let allComparisonData = [];
 
-  document.getElementById("targetRevenue").textContent = formatRupiah(totalTarget);
-  document.getElementById("actualRevenue").textContent = formatRupiah(totalActual);
-  document.getElementById("achievement").textContent = achievement.toFixed(1) + "%";
+function getUserId() {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  return user.userId || user.id || 3;
+}
 
-  const statusText = document.getElementById("statusText");
+function formatRupiah(value) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0
+  }).format(Number(value) || 0);
+}
+
+function getChannelName(platformId) {
+  const map = {
+    1: "Tokopedia",
+    2: "Youtube",
+    3: "Google",
+    4: "Tiktok",
+    5: "Instagram"
+  };
+
+  return map[platformId] || "Unknown";
+}
+
+function getSafeCampaignName(campaign) {
+  return (
+    campaign.namaCampaign ||
+    campaign.campaignName ||
+    campaign.name ||
+    "Campaign Tanpa Nama"
+  );
+}
+
+function getStatus(item) {
+  if (item.achievement >= 100) {
+    return {
+      text: "Achieved",
+      className: "good"
+    };
+  }
+
+  if (item.achievement >= 80) {
+    return {
+      text: "Need Watch",
+      className: "warning"
+    };
+  }
+
+  return {
+    text: "Underperform",
+    className: "bad"
+  };
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} - ${url}`);
+  }
+
+  return await res.json();
+}
+
+function normalizePerformance(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (Array.isArray(raw.performance)) return raw.performance;
+  if (Array.isArray(raw.performanceMetrics)) return raw.performanceMetrics;
+  if (Array.isArray(raw.data)) return raw.data;
+  return [];
+}
+
+async function loadComparisonData() {
+  const userId = getUserId();
+
+  const campaigns = await fetchJson(`${BASE_URL}/GetUserCampaigns/${userId}`);
+
+  const result = [];
+
+  for (const campaignItem of campaigns) {
+    const campaignId = campaignItem.campaignId || campaignItem.id;
+
+    if (!campaignId) continue;
+
+    const performanceRaw = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
+
+    const reportCampaign = performanceRaw.campaign || campaignItem;
+    const performanceList = normalizePerformance(performanceRaw);
+
+    const campaignName = getSafeCampaignName(reportCampaign);
+    const channel = getChannelName(reportCampaign.platformId || campaignItem.platformId);
+
+    const targetRevenue = Number(
+      reportCampaign.targetIncome ||
+      reportCampaign.targetRevenue ||
+      campaignItem.targetIncome ||
+      campaignItem.targetRevenue ||
+      0
+    );
+
+    const actualRevenue = performanceList.reduce((sum, p) => {
+      return sum + Number(p.revenue || p.income || p.actualRevenue || 0);
+    }, 0);
+
+    const difference = actualRevenue - targetRevenue;
+
+    const achievement = targetRevenue > 0
+      ? (actualRevenue / targetRevenue) * 100
+      : 0;
+
+    result.push({
+      campaignId,
+      campaign: campaignName,
+      channel,
+      targetRevenue,
+      actualRevenue,
+      difference,
+      achievement
+    });
+  }
+
+  return result;
+}
+
+function getFilteredData() {
+  const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
+  const channel = document.getElementById("channelFilter").value;
+
+  return allComparisonData.filter(item => {
+    const matchKeyword = item.campaign.toLowerCase().includes(keyword);
+    const matchChannel = channel === "all" || item.channel === channel;
+
+    return matchKeyword && matchChannel;
+  });
+}
+
+function renderKpi(data) {
+  const totalTarget = data.reduce((sum, item) => sum + item.targetRevenue, 0);
+  const totalActual = data.reduce((sum, item) => sum + item.actualRevenue, 0);
+
+  const achievement = totalTarget > 0
+    ? (totalActual / totalTarget) * 100
+    : 0;
+
+  const best = data.length
+    ? data.reduce((prev, curr) => curr.achievement > prev.achievement ? curr : prev)
+    : null;
+
+  document.getElementById("totalTarget").textContent = formatRupiah(totalTarget);
+  document.getElementById("totalActual").textContent = formatRupiah(totalActual);
+  document.getElementById("achievementRate").textContent = `${achievement.toFixed(1)}%`;
+  document.getElementById("bestCampaign").textContent = best ? best.campaign : "-";
+
+  const achievementEl = document.getElementById("achievementRate");
+
+  achievementEl.classList.remove("good", "warning", "bad");
 
   if (achievement >= 100) {
-    statusText.textContent = "Tercapai";
-    statusText.className = "success";
-  } else if (achievement >= 75) {
-    statusText.textContent = "Hampir";
-    statusText.className = "warning";
+    achievementEl.classList.add("good");
+  } else if (achievement >= 80) {
+    achievementEl.classList.add("warning");
   } else {
-    statusText.textContent = "Kurang";
-    statusText.className = "danger";
+    achievementEl.classList.add("bad");
   }
 }
 
-function loadChart() {
-  const ctx = document.getElementById("comparisonChart");
+function renderComparisonCards(data) {
+  const wrapper = document.getElementById("comparisonCards");
+  wrapper.innerHTML = "";
 
-  new Chart(ctx, {
+  if (!data.length) {
+    wrapper.innerHTML = `
+      <div class="empty-state">
+        Data comparison kosong. Backend-nya belum ngasih makan, jadi UI-nya bengong.
+      </div>
+    `;
+    return;
+  }
+
+  data.slice(0, 4).forEach(item => {
+    const status = getStatus(item);
+
+    const progress = item.targetRevenue > 0
+      ? Math.min(item.achievement, 100)
+      : 0;
+
+    const card = document.createElement("div");
+    card.className = "product-card";
+
+    card.innerHTML = `
+      <div class="product-card-top">
+        <div>
+          <div class="product-title">${item.campaign}</div>
+          <div class="product-meta">${item.channel}</div>
+        </div>
+
+        <span class="status ${status.className}">
+          ${status.text}
+        </span>
+      </div>
+
+      <div class="product-card-value ${status.className}">
+        ${item.achievement.toFixed(1)}%
+      </div>
+
+      <div class="product-card-sub">
+        Actual ${formatRupiah(item.actualRevenue)} dari Target ${formatRupiah(item.targetRevenue)}
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-fill ${status.className}" style="width:${progress}%"></div>
+      </div>
+    `;
+
+    wrapper.appendChild(card);
+  });
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById("comparisonTable");
+  tbody.innerHTML = "";
+
+  if (!data.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align:center; padding:24px;">
+          Data comparison tidak ditemukan
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  data.forEach(item => {
+    const status = getStatus(item);
+    const channelClass = item.channel.toLowerCase();
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>
+        <div class="campaign-name">${item.campaign}</div>
+        <div class="product-name">Campaign ID: ${item.campaignId}</div>
+      </td>
+
+      <td>
+        <span class="badge ${channelClass}">
+          ${item.channel}
+        </span>
+      </td>
+
+      <td>${formatRupiah(item.targetRevenue)}</td>
+
+      <td class="${status.className}">
+        ${formatRupiah(item.actualRevenue)}
+      </td>
+
+      <td class="${item.difference >= 0 ? "good" : "bad"}">
+        ${item.difference >= 0 ? "+" : ""}${formatRupiah(item.difference)}
+      </td>
+
+      <td class="${status.className}">
+        ${item.achievement.toFixed(1)}%
+      </td>
+
+      <td>
+        <span class="status ${status.className}">
+          ${status.text}
+        </span>
+      </td>
+    `;
+
+    tbody.appendChild(row);
+  });
+}
+
+function renderComparisonRevenueChart(data) {
+  const ctx = document.getElementById("comparisonRevenueChart");
+
+  if (comparisonRevenueChart) {
+    comparisonRevenueChart.destroy();
+  }
+
+  comparisonRevenueChart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: comparisonData.map(item => item.campaign),
+      labels: data.map(item => item.campaign),
       datasets: [
         {
           label: "Target Revenue",
-          data: comparisonData.map(item => item.targetRevenue),
+          data: data.map(item => item.targetRevenue),
+          backgroundColor: "rgba(59,130,246,0.65)",
           borderRadius: 10
         },
         {
-          label: "Aktual Revenue",
-          data: comparisonData.map(item => item.actualRevenue),
+          label: "Actual Revenue",
+          data: data.map(item => item.actualRevenue),
+          backgroundColor: data.map(item => channelColors[item.channel] || channelColors.Unknown),
           borderRadius: 10
         }
       ]
@@ -75,98 +321,123 @@ function loadChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+
       plugins: {
         legend: {
           labels: {
-            color: "#d7defa"
+            color: "#d4d4d8"
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: context => {
+              return `${context.dataset.label}: ${formatRupiah(context.raw)}`;
+            }
           }
         }
       },
+
       scales: {
         x: {
-          ticks: { color: "#aab3d6" },
-          grid: { color: "rgba(255,255,255,0.06)" }
-        },
-        y: {
           ticks: {
-            color: "#aab3d6",
-            callback: value => "Rp" + value / 1000000 + "jt"
+            color: "#a1a1aa"
           },
-          grid: { color: "rgba(255,255,255,0.06)" }
+          grid: {
+            color: "#24242b"
+          }
+        },
+
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: "#a1a1aa",
+            callback: value => `Rp ${Number(value).toLocaleString("id-ID")}`
+          },
+          grid: {
+            color: "#24242b"
+          }
         }
       }
     }
   });
 }
 
-function loadProgress() {
-  const progressList = document.getElementById("progressList");
-  progressList.innerHTML = "";
+function renderAchievementChart(data) {
+  const ctx = document.getElementById("achievementChart");
 
-  comparisonData.forEach(item => {
-    const percent = item.targetRevenue > 0
-      ? (item.actualRevenue / item.targetRevenue) * 100
-      : 0;
+  if (achievementChart) {
+    achievementChart.destroy();
+  }
 
-    const progressWidth = Math.min(percent, 100);
+  achievementChart = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: data.map(item => item.campaign),
+      datasets: [
+        {
+          data: data.map(item => item.achievement),
+          backgroundColor: data.map(item => {
+            const status = getStatus(item);
+            if (status.className === "good") return "#34D399";
+            if (status.className === "warning") return "#FBBF24";
+            return "#F87171";
+          }),
+          borderColor: "#18181d",
+          borderWidth: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "65%",
 
-    progressList.innerHTML += `
-      <div class="progress-item">
-        <div class="progress-info">
-          <span>${item.campaign}</span>
-          <strong>${percent.toFixed(1)}%</strong>
-        </div>
-
-        <div class="progress-bar">
-          <div class="progress-fill" style="width:${progressWidth}%"></div>
-        </div>
-
-        <small>${formatRupiah(item.actualRevenue)} / ${formatRupiah(item.targetRevenue)}</small>
-      </div>
-    `;
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            color: "#d4d4d8",
+            padding: 16
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: context => {
+              return `${context.label}: ${Number(context.raw).toFixed(1)}%`;
+            }
+          }
+        }
+      }
+    }
   });
 }
 
-function loadTable() {
-  const tbody = document.getElementById("comparisonTable");
-  tbody.innerHTML = "";
+function renderAll() {
+  const data = getFilteredData();
 
-  comparisonData.forEach(item => {
-    const diff = item.actualRevenue - item.targetRevenue;
-    const percent = item.targetRevenue > 0
-      ? (item.actualRevenue / item.targetRevenue) * 100
-      : 0;
+  renderKpi(data);
+  renderComparisonCards(data);
+  renderTable(data);
+  renderComparisonRevenueChart(data);
+  renderAchievementChart(data);
+}
 
-    let status = "Kurang";
-    let badge = "badge danger";
+async function initComparisonPage() {
+  try {
+    allComparisonData = await loadComparisonData();
+    renderAll();
+  } catch (err) {
+    console.error("Comparison page error:", err);
 
-    if (percent >= 100) {
-      status = "Tercapai";
-      badge = "badge success";
-    } else if (percent >= 75) {
-      status = "Hampir";
-      badge = "badge warning";
-    }
-
-    tbody.innerHTML += `
-      <tr>
-        <td>${item.campaign}</td>
-        <td>${item.channel}</td>
-        <td>${formatRupiah(item.targetRevenue)}</td>
-        <td>${formatRupiah(item.actualRevenue)}</td>
-        <td class="${diff >= 0 ? "success" : "danger"}">
-          ${diff >= 0 ? "+" : ""}${formatRupiah(diff)}
-        </td>
-        <td>${percent.toFixed(1)}%</td>
-        <td><span class="${badge}">${status}</span></td>
-      </tr>
-    `;
-  });
+    alert(
+      "Gagal load comparison data. Cek BASE_URL, API, CORS, atau field targetIncome. Backend dramanya kambuh."
+    );
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadSummary();
-  loadChart();
-  loadProgress();
-  loadTable();
+  document.getElementById("searchInput").addEventListener("input", renderAll);
+  document.getElementById("channelFilter").addEventListener("change", renderAll);
+
+  initComparisonPage();
 });

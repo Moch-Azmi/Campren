@@ -3,100 +3,246 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CAMPREN - Target vs Aktual</title>
+
+  <title>CAMPREN - Target vs Actual</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
   <link rel="stylesheet" href="style.css" />
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
 
-<aside class="sidebar">
-  <div class="brand">
-    <div class="brand-icon">C</div>
-    <h2>CAMPREN</h2>
+<body>
+  <body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sidebar-logo">
+
+    <div class="logo-icon">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <rect width="28" height="28" rx="8" fill="#6366f1"/>
+        <path
+          d="M7 18L12 11L16 15L20 8"
+          stroke="white"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <circle
+          cx="20"
+          cy="8"
+          r="2"
+          fill="#a5f3fc"
+        />
+      </svg>
+    </div>
+
+    <div>
+      <div class="logo-name">CAMPREN</div>
+      <div class="logo-tagline">
+        EXPLORE. ANALYZE. GROWTH.
+      </div>
+    </div>
+
   </div>
 
-  <nav>
-    <a href="../Dashboard/index.html">Dashboard</a>
-    <a href="../InputData/index.html">Input Data</a>
-    <a href="../TrackingChannel/index.html">Tracking Channel</a>
-    <a class="active" href="#">Comparison</a>
-    <a href="../Export/index.html">Export</a>
+  <!-- NAV -->
+  <nav class="sidebar-nav">
+
+    <div class="nav-group-label">
+      DASHBOARD
+    </div>
+
+    <a href="../Dashboard/index.html" class="nav-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Overview
+    </a>
+
+    <a href="../Tracking/index.html" class="nav-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3 12h4l3-9 4 18 3-9h4"/>
+      </svg>
+      Tracking
+    </a>
+
+    <a href="../Product/index.html" class="nav-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 8v4l3 3"/>
+      </svg>
+      Product
+    </a>
+
+    <a href="../Comparison/index.html" class="nav-item active">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3 3h18v4H3zM3 10h18v4H3zM3 17h18v4H3z"/>
+      </svg>
+      Comparison
+    </a>
+
+    <div class="nav-group-label">
+      MANAGE
+    </div>
+
+    <a href="../Input/index.html" class="nav-item">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M12 8v8M8 12h8"/>
+      </svg>
+      Input Data
+    </a>
+
   </nav>
-</aside>
 
-<main class="main">
-  <header class="topbar">
-    <div>
-      <h1>Comparison Data</h1>
-      <p>Perbandingan target dan data aktual campaign</p>
-    </div>
+  </aside>
 
-    <button class="export-btn" onclick="window.location.href='../Export/index.html'">
-      Export Report
-    </button>
-  </header>
+  <!-- MAIN -->
+  <main class="main">
 
-  <section class="cards">
-    <div class="card">
-      <p>Total Target Revenue</p>
-      <h2 id="targetRevenue">Rp0</h2>
-    </div>
-    <div class="card">
-      <p>Total Aktual Revenue</p>
-      <h2 id="actualRevenue">Rp0</h2>
-    </div>
-    <div class="card">
-      <p>Pencapaian</p>
-      <h2 id="achievement">0%</h2>
-    </div>
-    <div class="card">
-      <p>Status</p>
-      <h2 id="statusText">-</h2>
-    </div>
-  </section>
+    <!-- TOPBAR -->
+    <header class="topbar">
 
-  <section class="content-grid">
-    <div class="panel">
-      <div class="panel-header">
-        <h3>Target vs Aktual Revenue</h3>
-        <p>Per campaign</p>
-      </div>
-      <canvas id="comparisonChart"></canvas>
-    </div>
-
-    <div class="panel">
-      <div class="panel-header">
-        <h3>Progress Target</h3>
-        <p>Seberapa dekat aktual ke target</p>
+      <div>
+        <h1 class="page-title">Target vs Actual Comparison</h1>
+        <p class="page-subtitle">
+          Compare campaign target revenue with actual performance
+        </p>
       </div>
 
-      <div id="progressList" class="progress-list"></div>
-    </div>
-  </section>
+      <button class="user-avatar" type="button" onclick="window.location.href='../Login/index.html'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+      </button>
 
-  <section class="panel table-panel">
-    <div class="panel-header">
-      <h3>Detail Comparison</h3>
-      <p>Data target dan aktual lengkap</p>
-    </div>
+    </header>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Campaign</th>
-          <th>Channel</th>
-          <th>Target Revenue</th>
-          <th>Aktual Revenue</th>
-          <th>Selisih</th>
-          <th>Pencapaian</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="comparisonTable"></tbody>
-    </table>
-  </section>
-</main>
+    <!-- CONTENT -->
+    <section class="content">
 
-<script src="script.js"></script>
+      <!-- FILTER -->
+      <div class="filter-card">
+
+        <div>
+          <div class="filter-title">Comparison Filter</div>
+          <div class="filter-subtitle">
+            Cari campaign atau filter berdasarkan channel
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Search campaign..."
+          />
+
+          <select id="channelFilter" class="select-input">
+            <option value="all">All Channel</option>
+            <option value="Tokopedia">Tokopedia</option>
+            <option value="Youtube">Youtube</option>
+            <option value="Google">Google</option>
+            <option value="Tiktok">Tiktok</option>
+            <option value="Instagram">Instagram</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- KPI -->
+      <section class="kpi-grid">
+
+        <div class="kpi-card">
+          <div class="kpi-top-label">TOTAL TARGET</div>
+          <div class="kpi-value spend-val" id="totalTarget">Rp 0</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top-label">TOTAL ACTUAL</div>
+          <div class="kpi-value revenue-val" id="totalActual">Rp 0</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top-label">ACHIEVEMENT</div>
+          <div class="kpi-value" id="achievementRate">0%</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top-label">BEST CAMPAIGN</div>
+          <div class="kpi-value best-product" id="bestCampaign">-</div>
+        </div>
+
+      </section>
+
+      <!-- SUMMARY CARDS -->
+      <section class="product-summary-grid" id="comparisonCards"></section>
+
+      <!-- CHARTS -->
+      <section class="charts-row">
+
+        <div class="chart-card">
+          <div class="card-title">TARGET VS ACTUAL REVENUE</div>
+          <canvas id="comparisonRevenueChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="card-title">ACHIEVEMENT RATE</div>
+          <canvas id="achievementChart"></canvas>
+        </div>
+
+      </section>
+
+      <!-- TABLE -->
+      <section class="table-card">
+
+        <div class="table-head">
+          <div class="filter-title">Target vs Actual Report</div>
+          <div class="table-subtitle">
+            Detail perbandingan target revenue dan actual revenue campaign
+          </div>
+        </div>
+
+        <div class="table-wrap">
+
+          <table class="campaign-table">
+
+            <thead>
+              <tr>
+                <th>CAMPAIGN</th>
+                <th>CHANNEL</th>
+                <th>TARGET REVENUE</th>
+                <th>ACTUAL REVENUE</th>
+                <th>DIFFERENCE</th>
+                <th>ACHIEVEMENT</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+
+            <tbody id="comparisonTable"></tbody>
+
+          </table>
+
+        </div>
+
+      </section>
+
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
