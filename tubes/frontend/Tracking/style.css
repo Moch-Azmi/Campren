@@ -236,12 +236,15 @@ body {
 .chart-card {
   height: 360px;
   overflow: hidden;
+  position: relative;
 }
 
 .chart-card canvas {
   width: 100% !important;
-  height: 300px !important;
+  height: 100% !important;
+  max-height: 280px;
 }
+
 
 .card-title {
   font-size: 11px;
