@@ -1,54 +1,48 @@
-const reportData = [
-  {
-    campaign: "Ramadhan Sale",
-    channel: "Tiktok",
-    spend: 1200000,
-    revenue: 5800000,
-    roas: 4.8,
-    date: "2026-05-01"
-  },
-  {
-    campaign: "Samsung Launch",
-    channel: "Youtube",
-    spend: 2100000,
-    revenue: 7200000,
-    roas: 3.4,
-    date: "2026-05-03"
-  },
-  {
-    campaign: "Tokopedia Flash Sale",
-    channel: "Tokopedia",
-    spend: 900000,
-    revenue: 4500000,
-    roas: 5.0,
-    date: "2026-05-08"
-  },
-  {
-    campaign: "Google Ads Awareness",
-    channel: "Google",
-    spend: 1500000,
-    revenue: 2500000,
-    roas: 1.7,
-    date: "2026-05-12"
-  },
-  {
-    campaign: "Instagram Fashion Ads",
-    channel: "Instagram",
-    spend: 800000,
-    revenue: 2800000,
-    roas: 3.5,
-    date: "2026-05-15"
-  }
-];
+const BASE_URL = "https://camprentelu.azurewebsites.net/api";
 
-let filteredData = [...reportData];
+let reportData = [];
+let filteredData = [];
+
+function getUserId() {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  return user.userId || user.id || 3;
+}
 
 function formatRupiah(value) {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     maximumFractionDigits: 0
-  }).format(value);
+  }).format(Number(value) || 0);
+}
+
+function getChannelName(platformId) {
+  const map = {
+    1: "Tokopedia",
+    2: "Youtube",
+    3: "Google",
+    4: "Tiktok",
+    5: "Instagram"
+  };
+
+  return map[platformId] || "Unknown";
+}
+
+function getCampaignName(campaign) {
+  return (
+    campaign.namaCampaign ||
+    campaign.campaignName ||
+    campaign.name ||
+    "Campaign Tanpa Nama"
+  );
+}
+
+function normalizePerformance(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (Array.isArray(raw.performance)) return raw.performance;
+  if (Array.isArray(raw.performanceMetrics)) return raw.performanceMetrics;
+  if (Array.isArray(raw.data)) return raw.data;
+  return [];
 }
 
 function getStatus(roas) {
@@ -61,6 +55,71 @@ function getStatusClass(status) {
   if (status === "Good") return "good";
   if (status === "Warning") return "warning";
   return "bad";
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}: ${url}`);
+  }
+
+  return await res.json();
+}
+
+async function loadReportData() {
+  const userId = getUserId();
+
+  const campaigns = await fetchJson(`${BASE_URL}/GetUserCampaigns/${userId}`);
+
+  const result = [];
+
+  for (const campaign of campaigns) {
+    const campaignId = campaign.campaignId || campaign.id;
+
+    if (!campaignId) continue;
+
+    try {
+      const performanceRaw = await fetchJson(
+        `${BASE_URL}/PerformanceReport/${campaignId}`
+      );
+
+      const reportCampaign = performanceRaw.campaign || campaign;
+      const performanceList = normalizePerformance(performanceRaw);
+
+      const spend = performanceList.reduce((sum, item) => {
+        return sum + Number(item.cost || item.spend || item.adSpend || 0);
+      }, 0);
+
+      const revenue = performanceList.reduce((sum, item) => {
+        return sum + Number(item.revenue || item.income || item.actualRevenue || 0);
+      }, 0);
+
+      const roas = spend > 0 ? revenue / spend : 0;
+
+      result.push({
+        campaignId,
+        campaign: getCampaignName(reportCampaign),
+        channel: getChannelName(reportCampaign.platformId || campaign.platformId),
+        spend,
+        revenue,
+        roas,
+        date:
+          reportCampaign.tanggalMulai ||
+          campaign.tanggalMulai ||
+          campaign.startDate ||
+          ""
+      });
+    } catch (err) {
+      console.error(`Gagal ambil report campaign ${campaignId}:`, err);
+    }
+  }
+
+  reportData = result;
+  filteredData = [...reportData];
+
+  renderKPI(filteredData);
+  renderTable(filteredData);
 }
 
 function renderKPI(data) {
@@ -79,11 +138,11 @@ function renderTable(data) {
   const tbody = document.getElementById("reportTable");
   tbody.innerHTML = "";
 
-  if (data.length === 0) {
+  if (!data.length) {
     tbody.innerHTML = `
       <tr>
         <td colspan="6" class="empty">
-          Data tidak ditemukan. Filter lu terlalu brutal, santai dikit.
+          Data laporan kosong. API-nya belum ngasih data, bukan CSS-nya yang kesurupan.
         </td>
       </tr>
     `;
@@ -97,11 +156,15 @@ function renderTable(data) {
     const row = document.createElement("tr");
 
     row.innerHTML = `
-      <td>${item.campaign}</td>
+      <td>
+        ${item.campaign}
+        <br>
+        <small>ID: ${item.campaignId}</small>
+      </td>
       <td>${item.channel}</td>
       <td>${formatRupiah(item.spend)}</td>
       <td>${formatRupiah(item.revenue)}</td>
-      <td>${item.roas.toFixed(1)}x</td>
+      <td>${item.roas.toFixed(2)}x</td>
       <td>
         <span class="badge ${statusClass}">
           ${status}
@@ -124,8 +187,8 @@ function applyFilter() {
 
     const matchChannel = channel === "all" || item.channel === channel;
     const matchStatus = status === "all" || itemStatus === status;
-    const matchStartDate = !startDate || item.date >= startDate;
-    const matchEndDate = !endDate || item.date <= endDate;
+    const matchStartDate = !startDate || !item.date || item.date >= startDate;
+    const matchEndDate = !endDate || !item.date || item.date <= endDate;
 
     return matchChannel && matchStatus && matchStartDate && matchEndDate;
   });
@@ -147,7 +210,54 @@ function resetFilter() {
 }
 
 function exportReport(type) {
-  alert(`Export ${type} berhasil dibuat. Bohongan dulu ya, tinggal sambungin ke backend.`);
+  if (!filteredData.length) {
+    alert("Data kosong. Mau export apa, angin?");
+    return;
+  }
+
+  if (type === "CSV") {
+    exportCSV();
+  } else {
+    window.print();
+  }
+}
+
+function exportCSV() {
+  const header = [
+    "Campaign",
+    "Channel",
+    "Spend",
+    "Revenue",
+    "ROAS",
+    "Status"
+  ];
+
+  const rows = filteredData.map(item => [
+    item.campaign,
+    item.channel,
+    item.spend,
+    item.revenue,
+    item.roas.toFixed(2),
+    getStatus(item.roas)
+  ]);
+
+  const csvContent = [
+    header.join(","),
+    ...rows.map(row => row.map(value => `"${value}"`).join(","))
+  ].join("\n");
+
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "campren-export-report.csv";
+  link.click();
+
+  URL.revokeObjectURL(url);
 }
 
 function goBack() {
@@ -155,6 +265,16 @@ function goBack() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  renderKPI(filteredData);
-  renderTable(filteredData);
+  loadReportData().catch(err => {
+    console.error("Export report error:", err);
+
+    const tbody = document.getElementById("reportTable");
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="empty">
+          Gagal load data dari API. Cek BASE_URL, endpoint, CORS, atau backend-nya lagi drama.
+        </td>
+      </tr>
+    `;
+  });
 });
