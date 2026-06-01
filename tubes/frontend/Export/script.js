@@ -1,4 +1,4 @@
-const BASE_URL = "https://camprentelu.azurewebsites.net/api";
+const BASE_URL = "https://camprentelyu.azurewebsites.net/api";
 
 let reportData = [];
 let filteredData = [];
