@@ -81,36 +81,47 @@ async function loadTrackingData() {
   const trackingData = [];
 
   for (const item of campaigns) {
-    const campaignId = item.campaignId;
+    const campaignId = item.campaignId || item.id || item.CampaignID;
 
-    const performanceRaw = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
-    const roasRaw = await fetchJson(`${BASE_URL}/roas/${campaignId}`);
+    if (!campaignId) {
+      console.warn("Campaign tanpa ID:", item);
+      continue;
+    }
 
-    const campaign = performanceRaw.campaign || item;
-    const performanceList = normalizePerformance(performanceRaw);
-    const roas = getRoasValue(roasRaw);
+    try {
+      const performanceRaw = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
+      const roasRaw = await fetchJson(`${BASE_URL}/roas/${campaignId}`);
 
-    const revenue = performanceList.reduce((sum, p) => {
-      return sum + Number(p.revenue || 0);
-    }, 0);
+      const campaign = performanceRaw.campaign || item;
+      const performanceList = normalizePerformance(performanceRaw);
 
-    const adSpend = performanceList.reduce((sum, p) => {
-      return sum + Number(p.cost || 0);
-    }, 0);
+      const revenue = performanceList.reduce((sum, p) => {
+        return sum + Number(p.revenue || p.Revenue || 0);
+      }, 0);
 
-    const targetRevenue = Number(campaign.targetIncome || 0);
-    const targetRoas = adSpend > 0 ? targetRevenue / adSpend : 0;
+      const adSpend = performanceList.reduce((sum, p) => {
+        return sum + Number(p.cost || p.Cost || p.adSpend || 0);
+      }, 0);
 
-    trackingData.push({
-      campaign: campaign.namaCampaign || "-",
-      product: "-",
-      channel: getChannelName(campaign.platformId),
-      adSpend,
-      targetRevenue,
-      revenue,
-      targetRoas,
-      roas
-    });
+      const targetRevenue = Number(campaign.targetIncome || campaign.targetRevenue || 0);
+      const targetRoas = adSpend > 0 ? targetRevenue / adSpend : 0;
+      const roas = getRoasValue(roasRaw);
+
+      trackingData.push({
+        campaign: campaign.namaCampaign || campaign.name || "-",
+        product: "-",
+        channel: getChannelName(campaign.platformId),
+        adSpend,
+        targetRevenue,
+        revenue,
+        targetRoas,
+        roas
+      });
+
+    } catch (err) {
+      console.error(`Campaign ID ${campaignId} error, dilewati:`, err);
+      continue;
+    }
   }
 
   return trackingData;
@@ -269,8 +280,8 @@ async function initTracking() {
     renderRevenueChart(trackingData);
 
   } catch (err) {
-    console.error("Tracking error:", err);
-    alert("Gagal load data tracking. Cek API / CORS / CampaignID. Ya, web dev memang begini hidupnya.");
+    console.error("Tracking fatal error:", err);
+    alert("Gagal load campaign utama. Cek endpoint GetUserCampaigns/userId.");
   }
 }
 
