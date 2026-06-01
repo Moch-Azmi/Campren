@@ -19,13 +19,15 @@ function getUserId() {
   return user.userId || user.id || 3;
 }
 
-function formatRupiahJt(value) {
-  return `Rp. ${Number(value || 0).toFixed(1)}jt`;
+function formatRupiah(value) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0
+  }).format(value || 0);
 }
 
-function getChannelName(platformId, fallback) {
-  if (fallback) return fallback;
-
+function getChannelName(platformId) {
   const map = {
     1: "Tokopedia",
     2: "Youtube",
@@ -78,57 +80,31 @@ async function loadTrackingData() {
   const campaigns = await fetchJson(`${BASE_URL}/GetUserCampaigns/${userId}`);
   const trackingData = [];
 
-  for (const campaign of campaigns) {
-    const campaignId =
-      campaign.campaignId ||
-      campaign.id ||
-      campaign.CampaignID;
+  for (const item of campaigns) {
+    const campaignId = item.campaignId;
 
-    if (!campaignId) continue;
+    const performanceRaw = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
+    const roasRaw = await fetchJson(`${BASE_URL}/roas/${campaignId}`);
 
-    let performanceRaw = {};
-    let roasRaw = {};
-
-    try {
-      performanceRaw = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
-    } catch (err) {
-      console.error("Gagal ambil performance:", err);
-    }
-
-    try {
-      roasRaw = await fetchJson(`${BASE_URL}/roas/${campaignId}`);
-    } catch (err) {
-      console.error("Gagal ambil ROAS:", err);
-    }
-
-    const performanceList = normalizePerformance(performanceRaw);
+    const campaign = performanceRaw.campaign;
+    const performanceList = performanceRaw.performance || [];
 
     const revenue = performanceList.reduce((sum, p) => {
-      return sum + Number(p.revenue || p.income || p.totalRevenue || 0);
+      return sum + Number(p.revenue || 0);
     }, 0);
 
-    const adSpendFromPerf = performanceList.reduce((sum, p) => {
-      return sum + Number(p.cost || p.adSpend || p.spend || 0);
+    const adSpend = performanceList.reduce((sum, p) => {
+      return sum + Number(p.cost || 0);
     }, 0);
 
-    const adSpend = adSpendFromPerf || Number(campaign.budget || campaign.adSpend || 0);
-
-    const targetRevenue = Number(
-      campaign.targetIncome ||
-      campaign.targetRevenue ||
-      campaign.target_revenue ||
-      0
-    );
-
+    const targetRevenue = Number(campaign.targetIncome || 0);
     const targetRoas = adSpend > 0 ? targetRevenue / adSpend : 0;
-
-    const roasFromApi = getRoasValue(roasRaw);
-    const roas = roasFromApi || (adSpend > 0 ? revenue / adSpend : 0);
+    const roas = Number(roasRaw.roas || 0);
 
     trackingData.push({
-      campaign: campaign.namaCampaign || campaign.campaignName || campaign.name || "-",
-      product: campaign.namaProduk || campaign.product || "-",
-      channel: getChannelName(campaign.platformId, campaign.channel),
+      campaign: campaign.namaCampaign || "-",
+      product: "-",
+      channel: getChannelName(campaign.platformId),
       adSpend,
       targetRevenue,
       revenue,
@@ -149,8 +125,8 @@ function renderKpi(trackingData) {
     ? trackingData.reduce((prev, curr) => curr.roas > prev.roas ? curr : prev)
     : null;
 
-  document.getElementById("totalSpend").textContent = formatRupiahJt(totalSpend);
-  document.getElementById("totalRevenue").textContent = formatRupiahJt(totalRevenue);
+  document.getElementById("totalSpend").textContent = formatRupiah(totalSpend);
+  document.getElementById("totalRevenue").textContent = formatRupiah(totalRevenue);
   document.getElementById("avgRoas").textContent = `${avgRoas.toFixed(2)}x`;
   document.getElementById("bestChannel").textContent = best ? best.channel : "-";
 }
@@ -184,9 +160,9 @@ function renderTable(trackingData) {
           ${item.channel}
         </span>
       </td>
-      <td>${formatRupiahJt(item.adSpend)}</td>
-      <td>${formatRupiahJt(item.targetRevenue)}</td>
-      <td class="${status.className}">${formatRupiahJt(item.revenue)}</td>
+      <td>${formatRupiah(item.adSpend)}</td>
+      <td>${formatRupiah(item.targetRevenue)}</td>
+      <td class="${status.className}">${formatRupiah(item.revenue)}</td>
       <td>${item.targetRoas.toFixed(1)}x</td>
       <td class="${status.className}">${item.roas.toFixed(1)}x</td>
       <td>
