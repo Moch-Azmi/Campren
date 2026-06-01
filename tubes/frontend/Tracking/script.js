@@ -86,8 +86,9 @@ async function loadTrackingData() {
     const performanceRaw = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
     const roasRaw = await fetchJson(`${BASE_URL}/roas/${campaignId}`);
 
-    const campaign = performanceRaw.campaign;
-    const performanceList = performanceRaw.performance || [];
+    const campaign = performanceRaw.campaign || item;
+    const performanceList = normalizePerformance(performanceRaw);
+    const roas = getRoasValue(roasRaw);
 
     const revenue = performanceList.reduce((sum, p) => {
       return sum + Number(p.revenue || 0);
@@ -99,7 +100,6 @@ async function loadTrackingData() {
 
     const targetRevenue = Number(campaign.targetIncome || 0);
     const targetRoas = adSpend > 0 ? targetRevenue / adSpend : 0;
-    const roas = Number(roasRaw.roas || 0);
 
     trackingData.push({
       campaign: campaign.namaCampaign || "-",
