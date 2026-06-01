@@ -1,13 +1,9 @@
 const BASE_URL = "https://camprentelyu.azurewebsites.net/api";
 
 const channelColors = {
-  Tokopedia: "#8b5cf6",
-  Tiktok: "#3b82f6",
-  TikTok: "#3b82f6",
-  Instagram: "#ec4899",
+  Instagram: "#FBBF24",
   Youtube: "#ef4444",
-  YouTube: "#ef4444",
-  Google: "#22c55e",
+  Tiktok: "#3b82f6",
   Unknown: "#71717a"
 };
 
@@ -30,11 +26,9 @@ function formatRupiah(value) {
 
 function getChannelName(platformId) {
   const map = {
-    1: "Tokopedia",
+    1: "Instagram",
     2: "Youtube",
-    3: "Google",
-    4: "Tiktok",
-    5: "Instagram"
+    3: "Tiktok",
   };
 
   return map[platformId] || "Unknown";
