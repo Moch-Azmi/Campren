@@ -27,7 +27,7 @@ function getChannelName(platformId) {
   const map = {
     1: "Instagram",
     2: "Youtube",
-    4: "Tiktok",
+    3: "Tiktok",
   };
 
   return map[platformId] || "Unknown";
