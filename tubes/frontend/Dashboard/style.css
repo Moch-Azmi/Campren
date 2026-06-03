@@ -809,3 +809,31 @@ body {
 .user-avatar:hover {
   background: #232633;
 }
+
+.delete-campaign-btn {
+  border: none;
+  outline: none;
+
+  padding: 8px 12px;
+  border-radius: 10px;
+
+  background: rgba(248, 113, 113, 0.14);
+  color: var(--accent-red);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.delete-campaign-btn:hover {
+  background: rgba(248, 113, 113, 0.22);
+  transform: translateY(-1px);
+}
+
+.delete-campaign-btn:active {
+  transform: scale(0.96);
+}

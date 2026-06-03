@@ -163,6 +163,37 @@ async function safeJsonFetch(url) {
   }
 }
 
+async function deleteCampaign(campaignId) {
+  const confirmDelete = confirm(
+    `Yakin mau hapus campaign ID ${campaignId}?`
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    const response = await fetch(
+      `${BASE_URL}/campaign/${campaignId}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const text = await response.text();
+
+    if (!response.ok) {
+      throw new Error(text || "Gagal delete campaign");
+    }
+
+    alert("Campaign berhasil dihapus");
+
+    loadDashboard();
+
+  } catch (err) {
+    console.error("Delete campaign gagal:", err);
+    alert("Gagal delete campaign. Cek API / CORS / campaignId.");
+  }
+}
+
 async function loadDashboard() {
   try {
     console.log("LOAD DASHBOARD");
@@ -363,6 +394,14 @@ async function loadDashboard() {
 
         <td class="roas-orange">
           ${apiRoas.toFixed(2)}x
+        </td>
+
+        <td>
+          <button 
+            class="delete-campaign-btn"
+            onclick="deleteCampaign(${campaignId})">
+            Delete
+          </button>
         </td>
       `;
 
