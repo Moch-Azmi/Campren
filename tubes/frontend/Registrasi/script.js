@@ -11,12 +11,18 @@ const btnText   = signupBtn.querySelector('.btn-text');
 
 function showError(inputEl, errorId, msg) {
   inputEl.classList.add('error');
-  document.getElementById(errorId).textContent = msg;
+
+  const errorEl = document.getElementById(errorId);
+  errorEl.textContent = msg;
+  errorEl.classList.add('visible');
 }
 
 function clearError(inputEl, errorId) {
   inputEl.classList.remove('error');
-  document.getElementById(errorId).textContent = '';
+
+  const errorEl = document.getElementById(errorId);
+  errorEl.textContent = '';
+  errorEl.classList.remove('visible');
 }
 
 function validateEmail(v) {
@@ -24,7 +30,7 @@ function validateEmail(v) {
 }
 
 function validatePassword(v) {
-  return v.length >= 8;
+  return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(v);
 }
 
 // ================= SIGNUP =================
@@ -46,8 +52,12 @@ signupBtn.addEventListener('click', () => {
   } else clearError(emailInput,'email-error');
 
   if (!pass || !validatePassword(pass)) {
-    showError(passwordInput,'password-error','Password minimal 8 karakter');
-    valid=false;
+  showError(
+    passwordInput,
+    'password-error',
+    'Min. 8 karakter, 1 huruf besar, 1 huruf kecil, dan 1 angka'
+  );
+  valid = false;
   } else clearError(passwordInput,'password-error');
 
   if (conf !== pass) {
@@ -101,13 +111,20 @@ signupBtn.addEventListener('click', () => {
 
 });
 
+// ================= TOGGLE PASSWORD =================
+document.querySelectorAll(".toggle-password").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const targetId = btn.getAttribute("data-target");
+    const input = document.getElementById(targetId);
 
-// ================= FOOTER LOGIN LINK FIX =================
-document.querySelector(".footer-link").addEventListener("click", (e) => {
-  e.preventDefault();
-  window.location.href = "../Login/index.html";
-});
-
+    if (input.type === "password") {
+      input.type = "text";
+      btn.classList.add("active");
+    } else {
+      input.type = "password";
+      btn.classList.remove("active");
+    }
+  });
 });
 
 /* ══════════════════════════════════════════════════
@@ -171,3 +188,5 @@ document.querySelector(".footer-link").addEventListener("click", (e) => {
   }
   draw();
 })();
+
+});
