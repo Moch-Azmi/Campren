@@ -257,9 +257,6 @@ function calculateAllPreview() {
   input.addEventListener("input", calculateAllPreview);
 });
 
-// ============================================================
-// 7. SAVE CAMPAIGN – Validasi & Toast
-// ============================================================
 
 // ============================================================
 // 7. SAVE CAMPAIGN – SAVE TO API
