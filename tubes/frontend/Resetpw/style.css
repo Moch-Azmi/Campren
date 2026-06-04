@@ -174,20 +174,6 @@
   .eye-icon { width:17px; height:17px; }
 
   /* ── Strength ───────────────────────────────────────────────── */
-  .strength-track {
-    height: 3px;
-    border-radius: 99px;
-    background: rgba(255,255,255,.06);
-    overflow: hidden;
-  }
-
-  .strength-bar {
-    height: 100%;
-    width: 0%;
-    border-radius: 99px;
-    background: var(--red);
-    transition: width .35s ease, background .35s ease;
-  }
 
   .strength-text, .match-text, .field-hint {
     font-size: 11px;

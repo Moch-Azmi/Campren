@@ -1,14 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
-
   const signupBtn = document.querySelector(".signup");
 
-  if (!signupBtn) return;
-
-  signupBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.location.href = "../Registrasi/index.html";
-  });
-
+  if (signupBtn) {
+    signupBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.href = "../Registrasi/index.html";
+    });
+  }
 });
 
 /* ══════════════════════════════════════════════════
@@ -16,7 +14,11 @@ document.addEventListener("DOMContentLoaded", () => {
 ══════════════════════════════════════════════════ */
 (function () {
   const canvas = document.getElementById('waveCanvas');
-  const ctx    = canvas.getContext('2d');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
   let W, H;
 
   function resize() {
@@ -125,7 +127,6 @@ emailInput.addEventListener('input', () => {
    PASSWORD STRENGTH
 ══════════════════════════════════════════════════ */
 const newPwd      = $('newPassword');
-const strBar      = $('strengthBar');
 const strText     = $('strengthText');
 
 const levels = [
@@ -149,14 +150,42 @@ function calcStrength(p) {
 
 newPwd.addEventListener('input', () => {
   const val = newPwd.value;
-  const sc  = val.length ? calcStrength(val) : 0;
-  const lv  = levels[sc];
-  strBar.style.width      = lv.pct;
-  strBar.style.background = lv.bg;
-  strText.textContent     = lv.label;
-  strText.style.color     = lv.bg;
+
+  if (!val) {
+    strText.textContent = '';
+    validateMatch();
+    return;
+  }
+
+  if (isPasswordValid(val)) {
+    strText.textContent = '✓ Password valid';
+    strText.style.color = 'var(--green)';
+    newPwd.classList.remove('err');
+    newPwd.classList.add('ok');
+  } else {
+    strText.textContent =
+      '✗ Minimal 8 karakter, 1 huruf besar, 1 huruf kecil, dan 1 angka';
+    strText.style.color = 'var(--red)';
+    newPwd.classList.add('err');
+    newPwd.classList.remove('ok');
+  }
+
   validateMatch();
 });
+
+function validatePasswordRule(p) {
+  return {
+    minLength: p.length >= 8,
+    upper: /[A-Z]/.test(p),
+    lower: /[a-z]/.test(p),
+    number: /[0-9]/.test(p),
+  };
+}
+
+function isPasswordValid(p) {
+  const r = validatePasswordRule(p);
+  return r.minLength && r.upper && r.lower && r.number;
+}
 
 
 /* ══════════════════════════════════════════════════
@@ -208,12 +237,14 @@ $('submitBtn').addEventListener('click', (e) => {
     valid = false;
   }
 
-  if (!pwd || calcStrength(pwd) < 2) {
-    strText.textContent = '✗ Password terlalu lemah';
-    strText.style.color = 'var(--red)';
-    shake(newPwd);
-    valid = false;
-  }
+  if (!pwd || !isPasswordValid(pwd)) {
+  strText.textContent = '✗ Password wajib minimal 8 karakter, 1 huruf besar, 1 huruf kecil, dan 1 angka';
+  strText.style.color = 'var(--red)';
+  newPwd.classList.add('err');
+  newPwd.classList.remove('ok');
+  shake(newPwd);
+  valid = false;
+}
 
   if (!conf || pwd !== conf) {
     setErr(confirmPwd, '✗ Password tidak cocok', matchText);
