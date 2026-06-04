@@ -948,3 +948,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{
 .user-avatar:active {
   transform: scale(0.96);
 }
+
+input[type="date"]{
+  color-scheme: dark;
+}

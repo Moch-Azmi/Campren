@@ -142,6 +142,8 @@ const targetRevenueInput = document.getElementById("targetRevenue");
 const targetViewsInput = document.getElementById("targetViews");
 const targetClicksInput = document.getElementById("targetClicks");
 const targetCTRInput = document.getElementById("targetCTR");
+const tanggalMulaiInput = document.getElementById("tanggalMulai");
+const tanggalBerakhirInput = document.getElementById("tanggalBerakhir");
 
 const roasAktualCard = document.getElementById("roasAktualCard");
 const roasFormula = document.getElementById("roasFormula");
@@ -151,6 +153,16 @@ const roasStatus = document.getElementById("roasStatus");
 const ctrPreview = document.getElementById("ctrPreview");
 const ctrBarFill = document.getElementById("ctrBarFill");
 const ctrBarLabel = document.getElementById("ctrBarLabel");
+tanggalMulaiInput.addEventListener("change", () => {
+  tanggalBerakhirInput.min = tanggalMulaiInput.value;
+
+  if (
+    tanggalBerakhirInput.value &&
+    tanggalBerakhirInput.value < tanggalMulaiInput.value
+  ) {
+    tanggalBerakhirInput.value = "";
+  }
+});
 
 function formatRupiahShort(value) {
   const num = Number(value);
@@ -296,11 +308,8 @@ const payload = {
 
   budget: data.anggaran,
 
-  tanggalMulai:
-    document.getElementById("tanggalMulai").value,
-
-  tanggalAkhir:
-    document.getElementById("tanggalBerakhir").value,
+  tanggalMulai: data.tanggalMulai,
+  tanggalAkhir: data.tanggalBerakhir,
 
   targetViews: data.targetViews,
 
@@ -367,6 +376,10 @@ function collectFormData() {
   return {
     namaCampaign: document.getElementById('namaCampaign').value,
     channel: selectedChannel,
+
+    tanggalMulai: tanggalMulaiInput.value,
+    tanggalBerakhir: tanggalBerakhirInput.value,
+
     anggaran: parseFloat(document.getElementById('anggaran').value) || 0,
     targetViews: parseFloat(document.getElementById('targetViews').value) || 0,
     targetClicks: parseFloat(document.getElementById('targetClicks').value) || 0,
@@ -375,12 +388,40 @@ function collectFormData() {
 }
 
 function validateForm(data) {
+
   if (!data.namaCampaign) {
-    return { valid: false, message: 'Nama campaign wajib diisi' };
+    return {
+      valid: false,
+      message: 'Nama campaign wajib diisi'
+    };
   }
 
   if (!data.channel) {
-    return { valid: false, message: 'Pilih channel dulu' };
+    return {
+      valid: false,
+      message: 'Pilih channel dulu'
+    };
+  }
+
+  if (!data.tanggalMulai) {
+    return {
+      valid: false,
+      message: 'Tanggal mulai wajib diisi'
+    };
+  }
+
+  if (!data.tanggalBerakhir) {
+    return {
+      valid: false,
+      message: 'Tanggal berakhir wajib diisi'
+    };
+  }
+
+  if (data.tanggalBerakhir < data.tanggalMulai) {
+    return {
+      valid: false,
+      message: 'Tanggal berakhir tidak boleh lebih awal dari tanggal mulai'
+    };
   }
 
   return { valid: true };
