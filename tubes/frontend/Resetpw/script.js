@@ -286,11 +286,23 @@ $('submitBtn').addEventListener('click', (e) => {
     }
 
     if (response.ok && clean.includes("success")) {
-      btn.querySelector('.btn-label').textContent = 'Password berhasil diubah ✓';
-      btn.style.background = 'var(--green)';
-      btn.style.color = '#0c0c0f';
-      return;
-    }
+    btn.querySelector('.btn-label').textContent = 'Password berhasil diubah ✓';
+
+    btn.style.background = 'var(--green)';
+    btn.style.color = '#0c0c0f';
+
+    // Hapus session/login lama jika ada
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    sessionStorage.clear();
+
+    // Redirect ke Login setelah 2 detik
+    setTimeout(() => {
+      window.location.replace("../Login/index.html");
+    }, 1000);
+
+    return;
+  }
 
     btn.querySelector('.btn-label').textContent = 'Make a new password';
     alert("Gagal mengubah password: " + result);
