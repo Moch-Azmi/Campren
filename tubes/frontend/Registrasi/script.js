@@ -33,6 +33,24 @@ function validatePassword(v) {
   return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(v);
 }
 
+// ================= REALTIME PASSWORD VALIDATION =================
+passwordInput.addEventListener("input", () => {
+  if (!passwordInput.value) {
+    clearError(passwordInput, "password-error");
+    return;
+  }
+
+  if (!validatePassword(passwordInput.value)) {
+    showError(
+      passwordInput,
+      "password-error",
+      "Min. 8 karakter, 1 huruf besar, 1 huruf kecil, dan 1 angka"
+    );
+  } else {
+    clearError(passwordInput, "password-error");
+  }
+});
+
 // ================= SIGNUP =================
 signupBtn.addEventListener('click', () => {
 
@@ -54,11 +72,13 @@ signupBtn.addEventListener('click', () => {
   if (!pass || !validatePassword(pass)) {
   showError(
     passwordInput,
-    'password-error',
-    'Min. 8 karakter, 1 huruf besar, 1 huruf kecil, dan 1 angka'
+    "password-error",
+    "Min. 8 karakter, 1 huruf besar, 1 huruf kecil, dan 1 angka"
   );
   valid = false;
-  } else clearError(passwordInput,'password-error');
+  } else {
+    clearError(passwordInput, "password-error");
+  }
 
   if (conf !== pass) {
     showError(confirmInput,'confirm-password-error','Password tidak sama');
