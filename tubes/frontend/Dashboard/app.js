@@ -236,8 +236,13 @@ async function confirmDeleteCampaign() {
     }
 
     if (!response.ok) {
-      throw new Error(result.message || text || `HTTP ${response.status}`);
-    }
+      throw new Error(
+      result.error || 
+      result.message || 
+      text || 
+      `HTTP ${response.status}`
+    );
+}
 
     closeDeleteModal();
 
