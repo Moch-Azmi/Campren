@@ -961,3 +961,67 @@ body {
 .modal-btn.danger:hover {
   background: rgba(248, 113, 113, 0.28);
 }
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-campaign-btn {
+  border: none;
+  outline: none;
+
+  padding: 8px 12px;
+  border-radius: 10px;
+
+  background: rgba(59, 130, 246, 0.14);
+  color: var(--accent-blue);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.edit-campaign-btn:hover {
+  background: rgba(59, 130, 246, 0.22);
+  transform: translateY(-1px);
+}
+
+.edit-modal {
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.edit-input {
+  width: 100%;
+  margin-bottom: 10px;
+
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  padding: 10px 12px;
+
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 13px;
+
+  outline: none;
+}
+
+.edit-input:focus {
+  border-color: var(--border-focus);
+}
+
+.edit-label {
+  display: block;
+  margin-bottom: 6px;
+
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}

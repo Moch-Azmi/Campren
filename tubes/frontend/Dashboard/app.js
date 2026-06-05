@@ -250,6 +250,76 @@ async function confirmDeleteCampaign() {
   }
 }
 
+let selectedEditCampaignId = null;
+
+function openEditModal(campaign, campaignId) {
+  selectedEditCampaignId = campaignId;
+
+  document.getElementById("editCampaignName").value =
+    campaign.namaCampaign || "";
+
+  document.getElementById("editBudget").value =
+    campaign.budget || 0;
+
+  document.getElementById("editTanggalAkhir").value =
+    (campaign.tanggalAkhir || "")
+      .toString()
+      .split("T")[0];
+
+  document.getElementById("editTargetIncome").value =
+    campaign.targetIncome || 0;
+
+  document.getElementById("editTargetViews").value =
+    campaign.targetViews || 0;
+
+  document.getElementById("editTargetClicks").value =
+    campaign.targetClicks || 0;
+
+  document.getElementById("editModal").classList.add("show");
+}
+
+function closeEditModal() {
+  selectedEditCampaignId = null;
+  document.getElementById("editModal").classList.remove("show");
+}
+
+async function confirmEditCampaign() {
+  if (!selectedEditCampaignId) return;
+
+  const payload = {
+    namaCampaign: document.getElementById("editCampaignName").value.trim(),
+    budget: Number(document.getElementById("editBudget").value) || 0,
+    tanggalAkhir: document.getElementById("editTanggalAkhir").value,
+    targetClicks: Number(document.getElementById("editTargetClicks").value) || 0,
+    targetIncome: Number(document.getElementById("editTargetIncome").value) || 0,
+    targetViews: Number(document.getElementById("editTargetViews").value) || 0
+  };
+
+  try {
+    const response = await fetch(`${BASE_URL}/campaign/${selectedEditCampaignId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.status !== "success") {
+      throw new Error(result.message || "Gagal edit campaign");
+    }
+
+    closeEditModal();
+    showToast("Campaign berhasil diedit", "success");
+    await loadDashboard();
+
+  } catch (err) {
+    console.error(err);
+    showToast("Gagal edit campaign", "error");
+  }
+}
+
 async function loadDashboard() {
   try {
     console.log("LOAD DASHBOARD");
@@ -346,6 +416,16 @@ async function loadDashboard() {
           campaignInfo.targetIncome
         ) || 0;
 
+        const tanggalMulai =
+        (campaignInfo.tanggalMulai || campaignInfo.TanggalMulai || "-")
+          .toString()
+          .split("T")[0];
+
+      const tanggalAkhir =
+        (campaignInfo.tanggalAkhir || campaignInfo.TanggalAkhir || "-")
+          .toString()
+          .split("T")[0];
+
       /* total spend dari cost */
       const campaignSpend =
         performance.reduce(
@@ -437,6 +517,10 @@ async function loadDashboard() {
           </span>
         </td>
 
+        <td>${tanggalMulai}</td>
+
+        <td>${tanggalAkhir}</td>
+
         <td>
         Rp ${campaignSpend.toLocaleString("id-ID")}
         </td>
@@ -453,12 +537,20 @@ async function loadDashboard() {
         </td>
 
         <td>
+        <div class="action-buttons">
+          <button 
+            class="edit-campaign-btn"
+            onclick='openEditModal(${JSON.stringify(campaignInfo).replace(/'/g, "&apos;")}, ${campaignId})'>
+            Edit
+          </button>
+
           <button 
             class="delete-campaign-btn"
             onclick="deleteCampaign(${campaignId})">
             Delete
           </button>
-        </td>
+        </div>
+      </td>
       `;
 
       if (tbody) tbody.appendChild(tr);
@@ -644,6 +736,22 @@ document.addEventListener("DOMContentLoaded", () => {
     ?.addEventListener("click", (e) => {
       if (e.target.id === "deleteModal") {
         closeDeleteModal();
+      }
+    });
+
+    document
+  .getElementById("cancelEditBtn")
+  ?.addEventListener("click", closeEditModal);
+
+  document
+    .getElementById("confirmEditBtn")
+    ?.addEventListener("click", confirmEditCampaign);
+
+  document
+    .getElementById("editModal")
+    ?.addEventListener("click", (e) => {
+      if (e.target.id === "editModal") {
+        closeEditModal();
       }
     });
 });

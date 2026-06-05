@@ -351,19 +351,19 @@
           <table class="campaign-table">
 
             <thead>
-
-              <tr>
+            <tr>
                 <th>CAMPAIGN</th>
                 <th>CHANNEL</th>
+                <th>TANGGAL MULAI</th>
+                <th>TANGGAL AKHIR</th>
                 <th>AD SPEND</th>
                 <th>TARGET REVENUE</th>
                 <th>REVENUE</th>
                 <th>TARGET ROAS</th>
                 <th>ROAS</th>
                 <th>ACTION</th>
-              </tr>
-
-            </thead>
+            </tr>
+          </thead>
 
             <tbody>
 
@@ -396,6 +396,34 @@
         <button id="confirmDeleteBtn" class="modal-btn danger">
           Hapus
         </button>
+      </div>
+    </div>
+  </div>
+    <div id="editModal" class="modal-overlay">
+    <div class="delete-modal edit-modal">
+      <h3>Edit Campaign</h3>
+
+      <label class="edit-label">Nama Campaign</label>
+      <input id="editCampaignName" class="edit-input" placeholder="Nama Campaign">
+
+      <label class="edit-label">Budget</label>
+      <input id="editBudget" class="edit-input" type="number" placeholder="Budget">
+
+      <label class="edit-label">Tanggal Akhir</label>
+      <input id="editTanggalAkhir" class="edit-input" type="date">
+
+      <label class="edit-label">Target Revenue</label>
+      <input id="editTargetIncome" class="edit-input" type="number" placeholder="Target Revenue">
+
+      <label class="edit-label">Target Views</label>
+      <input id="editTargetViews" class="edit-input" type="number" placeholder="Target Views">
+
+      <label class="edit-label">Target Clicks</label>
+      <input id="editTargetClicks" class="edit-input" type="number" placeholder="Target Clicks">
+
+      <div class="modal-actions">
+        <button id="cancelEditBtn" class="modal-btn cancel">Batal</button>
+        <button id="confirmEditBtn" class="modal-btn danger">Simpan</button>
       </div>
     </div>
   </div>
