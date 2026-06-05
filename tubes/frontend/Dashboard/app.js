@@ -163,12 +163,55 @@ async function safeJsonFetch(url) {
   }
 }
 
-async function deleteCampaign(campaignId) {
-  const confirmDelete = confirm(
-    `Yakin mau hapus campaign ID ${campaignId}?`
-  );
+let selectedDeleteCampaignId = null;
 
-  if (!confirmDelete) return;
+function showToast(message, type = "success") {
+  const toast = document.getElementById("toast");
+
+  if (!toast) return;
+
+  toast.textContent = message;
+  toast.className = `toast show ${type}`;
+
+  setTimeout(() => {
+    toast.className = "toast";
+  }, 3000);
+}
+
+function openDeleteModal(campaignId) {
+  selectedDeleteCampaignId = campaignId;
+
+  const modal = document.getElementById("deleteModal");
+  const modalText = document.getElementById("deleteModalText");
+
+  if (modalText) {
+    modalText.textContent =
+      `Yakin mau hapus campaign ID ${campaignId}? Data ini tidak bisa dikembalikan.`;
+  }
+
+  modal.classList.add("show");
+}
+
+function closeDeleteModal() {
+  selectedDeleteCampaignId = null;
+
+  const modal = document.getElementById("deleteModal");
+
+  modal.classList.remove("show");
+}
+
+async function deleteCampaign(campaignId) {
+  openDeleteModal(campaignId);
+}
+
+async function confirmDeleteCampaign() {
+  if (!selectedDeleteCampaignId) return;
+
+  const campaignId = selectedDeleteCampaignId;
+  const confirmBtn = document.getElementById("confirmDeleteBtn");
+
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = "Menghapus...";
 
   try {
     const response = await fetch(
@@ -184,13 +227,25 @@ async function deleteCampaign(campaignId) {
       throw new Error(text || "Gagal delete campaign");
     }
 
-    alert("Campaign berhasil dihapus");
+    closeDeleteModal();
+
+    showToast("Campaign berhasil dihapus", "success");
 
     loadDashboard();
 
   } catch (err) {
     console.error("Delete campaign gagal:", err);
-    alert("Gagal delete campaign. Cek API / CORS / campaignId.");
+
+    closeDeleteModal();
+
+    showToast(
+      "Gagal delete campaign. Cek API / CORS / campaignId.",
+      "error"
+    );
+
+  } finally {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = "Hapus";
   }
 }
 
@@ -574,4 +629,20 @@ function updateDonutChart(channelTotals) {
 
 document.addEventListener("DOMContentLoaded", () => {
   loadDashboard();
+
+  document
+    .getElementById("cancelDeleteBtn")
+    ?.addEventListener("click", closeDeleteModal);
+
+  document
+    .getElementById("confirmDeleteBtn")
+    ?.addEventListener("click", confirmDeleteCampaign);
+
+  document
+    .getElementById("deleteModal")
+    ?.addEventListener("click", (e) => {
+      if (e.target.id === "deleteModal") {
+        closeDeleteModal();
+      }
+    });
 });

@@ -378,7 +378,27 @@
     </div>
 
   </main>
+  <div id="toast" class="toast"></div>
 
+  <div id="deleteModal" class="modal-overlay">
+    <div class="delete-modal">
+      <h3>Hapus Campaign?</h3>
+
+      <p id="deleteModalText">
+        Data campaign ini akan dihapus permanen.
+      </p>
+
+      <div class="modal-actions">
+        <button id="cancelDeleteBtn" class="modal-btn cancel">
+          Batal
+        </button>
+
+        <button id="confirmDeleteBtn" class="modal-btn danger">
+          Hapus
+        </button>
+      </div>
+    </div>
+  </div>
   <script src="app.js"></script>
 
 </body>
