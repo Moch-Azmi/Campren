@@ -1,117 +1,92 @@
 document.addEventListener("DOMContentLoaded", () => {
-
     const loginForm = document.getElementById("loginForm");
-
     const signInBtn = document.getElementById("signInBtn");
-
     const emailInput = document.getElementById("email");
-
     const passwordInput = document.getElementById("password");
+    const loginMessage = document.getElementById("loginMessage");
+
+    function showMessage(type, text) {
+        loginMessage.textContent = text;
+        loginMessage.className = `login-message show ${type}`;
+    }
+
+    function clearMessage() {
+        loginMessage.textContent = "";
+        loginMessage.className = "login-message";
+    }
 
     function setLoading(state) {
-
         signInBtn.disabled = state;
-
-        signInBtn.textContent =
-            state ? "Loading..." : "Sign In";
+        signInBtn.textContent = state ? "Loading..." : "Sign In";
     }
 
     async function handleLogin(e) {
-
         e.preventDefault();
+        clearMessage();
 
         const email = emailInput.value.trim();
-
         const password = passwordInput.value.trim();
 
         if (!email || !password) {
-
-            alert("Email / Password wajib diisi");
-
+            showMessage("error", "Email dan password wajib diisi. Masa login pakai niat doang.");
             return;
         }
 
         setLoading(true);
 
         try {
-
             const res = await fetch(
                 "https://camprentelyu.azurewebsites.net/api/login",
                 {
                     method: "POST",
-
                     headers: {
                         "Content-Type": "application/json"
                     },
-
-                    body: JSON.stringify({
-                        email,
-                        password
-                    })
+                    body: JSON.stringify({ email, password })
                 }
             );
 
-            const result = await res.json();
+            let result;
+
+            try {
+                result = await res.json();
+            } catch {
+                result = {};
+            }
 
             console.log("LOGIN:", result);
 
-            if (
-                res.ok &&
-                result.status === "registered"
-            ) {
+            if (res.ok && result.status === "registered") {
+                localStorage.setItem("user", JSON.stringify(result));
 
-                localStorage.setItem(
-                    "user",
-                    JSON.stringify(result)
-                );
+                showMessage("success", "Login berhasil. Mengalihkan ke dashboard...");
 
-                alert("Login berhasil");
-
-                window.location.href =
-                    "../Dashboard/index.html";
-
+                setTimeout(() => {
+                    window.location.href = "../Dashboard/index.html";
+                }, 900);
             } else {
-
-                alert("Email / Password salah");
-
+                showMessage("error", "Email atau password salah.");
             }
 
         } catch (err) {
-
             console.error(err);
-
-            alert("Server error");
-
+            showMessage("error", "Server error. Backend-nya lagi drama.");
         }
 
         setLoading(false);
     }
 
-    loginForm.addEventListener(
-        "submit",
-        handleLogin
-    );
+    loginForm.addEventListener("submit", handleLogin);
 
-    document
-    .querySelector(".forgot-password")
-    .addEventListener("click", (e) => {
-
+    document.querySelector(".forgot-password")?.addEventListener("click", (e) => {
         e.preventDefault();
-
-        window.location.href =
-            "../Resetpw/index.html";
+        window.location.href = "../Resetpw/index.html";
     });
 
-    document
-    .querySelector(".signup-link")
-    .addEventListener("click", (e) => {
-
+    document.querySelector(".signup-link")?.addEventListener("click", (e) => {
         e.preventDefault();
-
-        window.location.href =
-            "../Registrasi/index.html";
+        window.location.href = "../Registrasi/index.html";
     });
-
 });
 
 /* ══════════════════════════════════════════════════
