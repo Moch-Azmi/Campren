@@ -552,6 +552,10 @@ async function loadDashboard() {
         <td>${tanggalAkhir}</td>
 
         <td>
+          Rp ${campaignBudget.toLocaleString("id-ID")}
+        </td>
+
+        <td>
         Rp ${campaignSpend.toLocaleString("id-ID")}
         </td>
         <td>Rp ${targetRevenue.toLocaleString("id-ID")}</td>
