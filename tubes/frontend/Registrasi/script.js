@@ -61,7 +61,7 @@ signupBtn.addEventListener('click', () => {
 
   let valid = true;
 
-  if (!nama) { showError(fullnameInput,'fullname-error','Nama wajib'); valid=false; }
+  if (!nama) { showError(fullnameInput,'fullname-error','Nama wajib diisi'); valid=false; }
   else clearError(fullnameInput,'fullname-error');
 
   if (!email || !validateEmail(email)) {
