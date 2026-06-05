@@ -227,8 +227,8 @@ return json;
             + "\"platformId\": " + campaign.get().getPlatformId() + ","
             + "\"namaCampaign\": \"" + campaign.get().getNamaCampaign() + "\","
             + "\"budget\": " + campaign.get().getBudget() + ","
-            + "\"tanggalAwal\": " + campaign.get().getTanggalMulai() + ","
-            + "\"tanggalAkhir\": " + campaign.get().getTanggalAkhir() + ","
+            + "\"tanggalAwal\": \"" + campaign.get().getTanggalMulai() + "\","
+            + "\"tanggalAkhir\": \"" + campaign.get().getTanggalAkhir() + "\","
             + "\"targetViews\": " + campaign.get().getTargetViews() + ","
             + "\"targetClicks\": " + campaign.get().getTargetClicks() + ","
             + "\"targetIncome\": " + campaign.get().getTargetIncome()
