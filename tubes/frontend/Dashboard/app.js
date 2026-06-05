@@ -427,6 +427,16 @@ async function loadDashboard() {
           campaignInfo.targetIncome
         ) || 0;
 
+      const campaignBudget =
+        Number(
+          campaignInfo.budget
+        ) || 0;
+
+      const targetRoas =
+        campaignBudget > 0
+          ? targetRevenue / campaignBudget
+          : 0;
+
       const tanggalMulai = formatDate(getVal(
         campaignInfo,
         [
@@ -550,7 +560,7 @@ async function loadDashboard() {
           Rp ${actualRevenue.toLocaleString("id-ID")}
         </td>
 
-        <td>${roasValue.toFixed(2)}x</td>
+        <td>${targetRoas.toFixed(2)}x</td>
 
         <td class="roas-orange">
           ${apiRoas.toFixed(2)}x
@@ -575,7 +585,7 @@ async function loadDashboard() {
 
       if (tbody) tbody.appendChild(tr);
 
-      const percent = Math.min((roasValue / 5) * 100, 100);
+      const percent = Math.min((targetRoas / 5) * 100, 100);
 
       const targetItem = document.createElement("div");
       targetItem.className = "troas-item";
@@ -587,7 +597,7 @@ async function loadDashboard() {
           </span>
 
           <span class="troas-val">
-            ${roasValue.toFixed(2)}x
+            ${targetRoas.toFixed(2)}x
           </span>
         </div>
 
