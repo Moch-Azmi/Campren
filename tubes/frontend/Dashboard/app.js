@@ -214,21 +214,37 @@ async function confirmDeleteCampaign() {
   confirmBtn.textContent = "Menghapus...";
 
   try {
-    const response = await fetch(`${BASE_URL}/campaign/${campaignId}`, {
+    const url = `${BASE_URL}/campaign/${campaignId}`;
+
+    console.log("DELETE URL:", url);
+
+    const response = await fetch(url, {
       method: "DELETE"
     });
 
-    const result = await response.json();
+    const text = await response.text();
 
-    console.log("DELETE RESULT:", result);
+    console.log("DELETE STATUS:", response.status);
+    console.log("DELETE RAW RESPONSE:", text);
 
-    if (!response.ok || result.status !== "success") {
-      throw new Error(result.message || "Gagal delete campaign");
+    let result = {};
+
+    try {
+      result = text ? JSON.parse(text) : {};
+    } catch {
+      result = {};
+    }
+
+    if (!response.ok) {
+      throw new Error(result.message || text || `HTTP ${response.status}`);
     }
 
     closeDeleteModal();
 
-    showToast("Campaign berhasil dihapus", "success");
+    showToast(
+      result.message || "Campaign berhasil dihapus",
+      "success"
+    );
 
     await loadDashboard();
 
@@ -548,7 +564,7 @@ async function loadDashboard() {
     }
   } catch (err) {
     console.error(err);
-    alert(err.message);
+    showToast(err.message || "Gagal load dashboard", "error");
   }
 } 
 
