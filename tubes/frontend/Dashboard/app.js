@@ -254,14 +254,14 @@ async function confirmDeleteCampaign() {
     await loadDashboard();
 
   } catch (err) {
-    console.error("Delete campaign gagal:", err);
+  console.error("Delete campaign gagal:", err);
 
-    closeDeleteModal();
+  closeDeleteModal();
 
-    showToast(
-      err.message || "Gagal delete campaign",
-      "error"
-    );
+  showToast(
+    "Gagal delete campaign. Hapus data performance campaign ini dulu di backend/database.",
+    "error"
+  );
 
   } finally {
     confirmBtn.disabled = false;
