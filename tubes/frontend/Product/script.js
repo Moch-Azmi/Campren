@@ -161,7 +161,7 @@ function renderProductCards(data) {
   wrapper.innerHTML = "";
 
   if (!data.length) {
-    wrapper.innerHTML = `<div class="empty-state">Data produk kosong. Tragis, tapi setidaknya UI-nya tetap rapi.</div>`;
+    wrapper.innerHTML = `<div class="empty-state">Data produk kosong.</div>`;
     return;
   }
 
