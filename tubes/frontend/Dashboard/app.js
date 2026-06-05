@@ -214,24 +214,23 @@ async function confirmDeleteCampaign() {
   confirmBtn.textContent = "Menghapus...";
 
   try {
-    const response = await fetch(
-      `${BASE_URL}/campaign/${campaignId}`,
-      {
-        method: "DELETE"
-      }
-    );
+    const response = await fetch(`${BASE_URL}/campaign/${campaignId}`, {
+      method: "DELETE"
+    });
 
-    const text = await response.text();
+    const result = await response.json();
 
-    if (!response.ok) {
-      throw new Error(text || "Gagal delete campaign");
+    console.log("DELETE RESULT:", result);
+
+    if (!response.ok || result.status !== "success") {
+      throw new Error(result.message || "Gagal delete campaign");
     }
 
     closeDeleteModal();
 
     showToast("Campaign berhasil dihapus", "success");
 
-    loadDashboard();
+    await loadDashboard();
 
   } catch (err) {
     console.error("Delete campaign gagal:", err);
@@ -239,7 +238,7 @@ async function confirmDeleteCampaign() {
     closeDeleteModal();
 
     showToast(
-      "Gagal delete campaign. Cek API / CORS / campaignId.",
+      err.message || "Gagal delete campaign",
       "error"
     );
 
