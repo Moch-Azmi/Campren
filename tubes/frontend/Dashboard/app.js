@@ -214,54 +214,35 @@ async function confirmDeleteCampaign() {
   confirmBtn.textContent = "Menghapus...";
 
   try {
-    const url = `${BASE_URL}/campaign/${campaignId}`;
+    const response = await fetch(
+      `https://camprentelyu.azurewebsites.net/api/campaign/${campaignId}`,
+      {
+        method: "DELETE"
+      }
+    );
 
-    console.log("DELETE URL:", url);
+    const result = await response.json();
 
-    const response = await fetch(url, {
-      method: "DELETE"
-    });
+    console.log("DELETE RESULT:", result);
 
-    const text = await response.text();
-
-    console.log("DELETE STATUS:", response.status);
-    console.log("DELETE RAW RESPONSE:", text);
-
-    let result = {};
-
-    try {
-      result = text ? JSON.parse(text) : {};
-    } catch {
-      result = {};
+    if (!response.ok || result.status !== "success") {
+      throw new Error("Gagal delete campaign");
     }
 
-    if (!response.ok) {
-      throw new Error(
-      result.error || 
-      result.message || 
-      text || 
-      `HTTP ${response.status}`
-    );
-}
-
     closeDeleteModal();
-
-    showToast(
-      result.message || "Campaign berhasil dihapus",
-      "success"
-    );
+    showToast("Campaign berhasil dihapus", "success");
 
     await loadDashboard();
 
   } catch (err) {
-  console.error("Delete campaign gagal:", err);
+    console.error(err);
 
-  closeDeleteModal();
+    closeDeleteModal();
 
-  showToast(
-    "Gagal delete campaign. Hapus data performance campaign ini dulu di backend/database.",
-    "error"
-  );
+    showToast(
+      "Gagal delete campaign. Campaign ini masih punya data terkait.",
+      "error"
+    );
 
   } finally {
     confirmBtn.disabled = false;
