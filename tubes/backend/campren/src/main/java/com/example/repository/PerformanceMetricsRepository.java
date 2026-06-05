@@ -9,4 +9,5 @@ public interface PerformanceMetricsRepository
         extends JpaRepository<PerformanceMetrics, Integer> {
 
     List<PerformanceMetrics> findByCampaignId(Integer campaignId);
+    void deleteByCampaignId(Integer campaignId);
 }

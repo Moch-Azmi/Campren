@@ -9,6 +9,8 @@ import com.example.repository.CampaignRepository;
 import com.example.repository.PelangganRepository;
 import com.example.repository.UsersRepository;
 import com.example.repository.PerformanceMetricsRepository;
+import jakarta.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,12 @@ public class AuthController {
 
     @Autowired
     private PerformanceMetricsRepository performanceRepository;
+    
+    @Autowired
+    private CampaignRepository campaignRepository;
+    
+    @Autowired
+    private PerformanceMetricsRepository performanceMetricsRepository;
 
 
     // ==================================================
@@ -217,7 +225,10 @@ return json;
             + "\"campaignId\": " + campaign.get().getCampaignId() + ","
             + "\"userId\": " + campaign.get().getUserId() + ","
             + "\"platformId\": " + campaign.get().getPlatformId() + ","
-            + "\"namaCampaign\": \"" + campaign.get().getNamaCampaign() + "\""
+            + "\"namaCampaign\": \"" + campaign.get().getNamaCampaign() + "\","
+            + "\"targetViews\": " + campaign.get().getTargetViews() + ","
+            + "\"targetClicks\": " + campaign.get().getTargetClicks() + ","
+            + "\"targetIncome\": " + campaign.get().getTargetIncome()
             + "},"
 
             + "\"performance\": [";
@@ -249,5 +260,94 @@ return json;
             e.printStackTrace();
             return "failed";
         }
+    }
+    @GetMapping("/GetUserCampaigns/{userId}")
+    public ResponseEntity<?> getUserCampaigns(
+        @PathVariable Integer userId) {
+
+        List<Campaign> campaigns =
+            campaignRepository.findByUserId(userId);
+
+        List<Map<String, Object>> response =
+            new ArrayList<>();
+
+        for (Campaign campaign : campaigns) {
+
+            Map<String, Object> data =
+                new HashMap<>();
+
+            data.put("campaignId",
+                campaign.getCampaignId());
+
+            response.add(data);
+        }
+
+        return ResponseEntity.ok(response);
+    }
+    @Transactional
+    @DeleteMapping("/campaign/{campaignId}")
+        public ResponseEntity<?> deleteCampaign(
+            @PathVariable Integer campaignId) {
+
+        Optional<Campaign> campaign =
+                campaignRepository.findById(campaignId);
+
+        if (campaign.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of(
+                            "status", "failed",
+                            "message", "Campaign not found"
+                    ));
+        }
+
+        // Delete all performance metrics that belong to this campaign
+        performanceMetricsRepository.deleteByCampaignId(campaignId);
+
+        // Delete the campaign itself
+        campaignRepository.deleteById(campaignId);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "status", "success",
+                        "message", "Campaign deleted",
+                        "campaignId", campaignId
+                )
+        );
+    }
+    @PutMapping("/campaign/{campaignId}")
+        public ResponseEntity<?> editCampaign(
+        @PathVariable Integer campaignId,
+        @RequestBody Campaign updatedCampaign) {
+
+        Optional<Campaign> campaignOpt =
+            campaignRepository.findById(campaignId);
+
+        if (campaignOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "status", "failed",
+                        "message", "Campaign not found"
+                ));
+        }
+
+        Campaign campaign = campaignOpt.get();
+
+        // Only editable fields
+        campaign.setNamaCampaign(updatedCampaign.getNamaCampaign());
+        campaign.setBudget(updatedCampaign.getBudget());
+        campaign.setTanggalAkhir(updatedCampaign.getTanggalAkhir());
+        campaign.setTargetClicks(updatedCampaign.getTargetClicks());
+        campaign.setTargetIncome(updatedCampaign.getTargetIncome());
+        campaign.setTargetViews(updatedCampaign.getTargetViews());
+
+        campaignRepository.save(campaign);
+
+        return ResponseEntity.ok(
+            Map.of(
+                    "status", "success",
+                    "message", "Campaign updated",
+                    "campaignId", campaignId
+            )
+        );
     }
 }

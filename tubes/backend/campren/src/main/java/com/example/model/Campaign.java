@@ -18,6 +18,12 @@ public class Campaign {
     private Integer budget;
     private Date tanggalMulai;
     private Date tanggalAkhir;
+    @Column(name = "targetViews")
+    private Long targetViews;
+    @Column(name = "targetClicks")
+    private Long targetClicks;
+    @Column(name = "targetIncome")
+    private Long targetIncome;
 
     public Integer getCampaignId() {
         return campaignId;
@@ -69,5 +75,29 @@ public class Campaign {
 
     public void setTanggalAkhir(Date tanggalAkhir) {
         this.tanggalAkhir = tanggalAkhir;
+    }
+    
+    public Long getTargetViews() {
+        return targetViews;
+    }
+
+    public void setTargetViews(Long targetViews) {
+        this.targetViews = targetViews;
+    }
+    
+    public Long getTargetClicks() {
+        return targetClicks;
+    }
+
+    public void setTargetClicks(Long targetClicks) {
+        this.targetClicks = targetClicks;
+    }
+    
+    public Long getTargetIncome() {
+        return targetIncome;
+    }
+
+    public void setTargetIncome(Long targetIncome) {
+        this.targetIncome = targetIncome;
     }
 }
