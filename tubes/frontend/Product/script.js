@@ -12,8 +12,13 @@ let productRoasChart = null;
 let allProducts = [];
 
 function getUserId() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  return user.userId || user.id || 3;
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user.userId || user.id || null;
+  } catch (error) {
+    console.error("Data user tidak valid:", error);
+    return null;
+  }
 }
 
 function formatRupiah(value) {
@@ -46,6 +51,10 @@ function getSafeProductName(campaign) {
 }
 
 function getStatus(item) {
+  if (item.targetRevenue <= 0 || item.targetRoas <= 0) {
+    return { text: "No Target", className: "warning" };
+  }
+
   if (item.roas >= item.targetRoas && item.revenue >= item.targetRevenue) {
     return { text: "Excellent", className: "good" };
   }
@@ -59,12 +68,17 @@ function getStatus(item) {
 
 async function fetchJson(url) {
   const res = await fetch(url);
+  const text = await res.text();
 
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} - ${url}`);
   }
 
-  return await res.json();
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(`Respons API bukan JSON valid - ${url}`);
+  }
 }
 
 function normalizePerformance(raw) {
@@ -77,6 +91,11 @@ function normalizePerformance(raw) {
 
 async function loadProductData() {
   const userId = getUserId();
+
+  if (!userId) {
+    throw new Error("User belum login");
+  }
+
   const campaigns = await fetchJson(`${BASE_URL}/GetUserCampaigns/${userId}`);
   const productMap = new Map();
 
@@ -84,45 +103,49 @@ async function loadProductData() {
     const campaignId = campaignItem.campaignId || campaignItem.id;
     if (!campaignId) continue;
 
-    const performanceRaw = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
-    const reportCampaign = performanceRaw.campaign || campaignItem;
-    const performanceList = normalizePerformance(performanceRaw);
+    try {
+      const performanceRaw = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
+      const reportCampaign = performanceRaw.campaign || campaignItem;
+      const performanceList = normalizePerformance(performanceRaw);
 
-    const productName = getSafeProductName(reportCampaign);
-    const campaignName = reportCampaign.namaCampaign || campaignItem.namaCampaign || "Campaign Tanpa Nama";
-    const channel = getChannelName(reportCampaign.platformId || campaignItem.platformId);
+      const productName = getSafeProductName(reportCampaign);
+      const campaignName = reportCampaign.namaCampaign || campaignItem.namaCampaign || "Campaign Tanpa Nama";
+      const channel = getChannelName(reportCampaign.platformId || campaignItem.platformId);
 
-    const revenue = performanceList.reduce((sum, p) => sum + Number(p.revenue || p.income || 0), 0);
-    const adSpend = performanceList.reduce((sum, p) => sum + Number(p.cost || p.spend || 0), 0);
-    const targetRevenue = Number(reportCampaign.targetIncome || reportCampaign.targetRevenue || 0);
-    const roas = adSpend > 0 ? revenue / adSpend : 0;
-    const targetRoas = adSpend > 0 ? targetRevenue / adSpend : 0;
+      const revenue = performanceList.reduce((sum, p) => sum + Number(p.revenue || p.income || 0), 0);
+      const adSpend = performanceList.reduce((sum, p) => sum + Number(p.cost || p.spend || 0), 0);
+      const budget = Number(reportCampaign.budget || campaignItem.budget || 0);
+      const targetRevenue = Number(reportCampaign.targetIncome || reportCampaign.targetRevenue || 0);
+      const key = `${productName}-${channel}`;
 
-    const key = `${productName}-${channel}`;
+      if (!productMap.has(key)) {
+        productMap.set(key, {
+          product: productName,
+          campaigns: [],
+          channel,
+          budget: 0,
+          adSpend: 0,
+          targetRevenue: 0,
+          revenue: 0,
+          roas: 0,
+          targetRoas: 0
+        });
+      }
 
-    if (!productMap.has(key)) {
-      productMap.set(key, {
-        product: productName,
-        campaigns: [],
-        channel,
-        adSpend: 0,
-        targetRevenue: 0,
-        revenue: 0,
-        roas: 0,
-        targetRoas: 0
-      });
+      const item = productMap.get(key);
+      item.campaigns.push(campaignName);
+      item.budget += budget;
+      item.adSpend += adSpend;
+      item.targetRevenue += targetRevenue;
+      item.revenue += revenue;
+    } catch (error) {
+      console.error(`Campaign ${campaignId} gagal dimuat:`, error);
     }
-
-    const item = productMap.get(key);
-    item.campaigns.push(campaignName);
-    item.adSpend += adSpend;
-    item.targetRevenue += targetRevenue;
-    item.revenue += revenue;
   }
 
   return Array.from(productMap.values()).map(item => {
     item.roas = item.adSpend > 0 ? item.revenue / item.adSpend : 0;
-    item.targetRoas = item.adSpend > 0 ? item.targetRevenue / item.adSpend : 0;
+    item.targetRoas = item.budget > 0 ? item.targetRevenue / item.budget : 0;
     return item;
   });
 }
@@ -322,7 +345,7 @@ async function initProductBreakdown() {
     renderAll();
   } catch (err) {
     console.error("Product breakdown error:", err);
-    alert("Gagal load breakdown produk. Cek API, CORS, atau nama field produk. Ya, backend memang suka drama.");
+    alert(err.message || "Gagal memuat breakdown produk.");
   }
 }
 

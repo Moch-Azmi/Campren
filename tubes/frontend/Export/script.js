@@ -5,8 +5,13 @@ let filteredData = [];
 let isLoaded = false;
 
 function getUserId() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  return user.userId || user.id || 3;
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user.userId || user.id || null;
+  } catch (error) {
+    console.error("Data user tidak valid:", error);
+    return null;
+  }
 }
 
 function formatRupiah(value) {
@@ -19,24 +24,27 @@ function formatRupiah(value) {
 
 function getChannelName(platformId) {
   const map = {
-    1: "Tokopedia",
+    1: "Instagram",
     2: "Youtube",
-    3: "Google",
-    4: "Tiktok",
-    5: "Instagram"
+    3: "Tiktok"
   };
 
-  return map[platformId] || "Unknown";
+  return map[Number(platformId)] || "Unknown";
 }
 
 async function fetchJson(url) {
   const res = await fetch(url);
+  const text = await res.text();
 
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}: ${url}`);
   }
 
-  return await res.json();
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(`Respons API bukan JSON valid: ${url}`);
+  }
 }
 
 function getStatus(roas) {
@@ -54,11 +62,11 @@ function getStatusClass(status) {
 async function loadReportData() {
   const userId = getUserId();
 
-  console.log("USER ID:", userId);
+  if (!userId) {
+    throw new Error("User belum login");
+  }
 
   const campaigns = await fetchJson(`${BASE_URL}/GetUserCampaigns/${userId}`);
-
-  console.log("CAMPAIGNS:", campaigns);
 
   const result = [];
 
@@ -67,14 +75,12 @@ async function loadReportData() {
 
     if (!campaignId) continue;
 
-    const report = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
+    try {
+      const report = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
+      const campaign = report.campaign;
+      const performance = report.performance || [];
 
-    console.log(`REPORT ${campaignId}:`, report);
-
-    const campaign = report.campaign;
-    const performance = report.performance || [];
-
-    if (!campaign) continue;
+      if (!campaign) continue;
 
     const spend = performance.reduce((sum, p) => {
       return sum + Number(p.cost || 0);
@@ -112,31 +118,33 @@ async function loadReportData() {
       console.warn(`Metrics API gagal untuk campaign ${campaignId}, pakai hitungan manual.`);
     }
 
-    result.push({
-      campaignId,
-      campaign: campaign.namaCampaign || "Campaign Tanpa Nama",
-      channel: getChannelName(campaign.platformId),
-      targetViews: Number(campaign.targetViews || 0),
-      targetClicks: Number(campaign.targetClicks || 0),
-      targetIncome: Number(campaign.targetIncome || 0),
-      spend,
-      revenue,
-      impressions,
-      clicks,
-      conversions,
-      roas,
-      ctr,
-      cpc,
-      status: getStatus(roas),
-      date: performance[0]?.tanggal || ""
-    });
+      result.push({
+        campaignId,
+        campaign: campaign.namaCampaign || "Campaign Tanpa Nama",
+        channel: getChannelName(campaign.platformId),
+        targetViews: Number(campaign.targetViews || 0),
+        targetClicks: Number(campaign.targetClicks || 0),
+        targetIncome: Number(campaign.targetIncome || 0),
+        spend,
+        revenue,
+        impressions,
+        clicks,
+        conversions,
+        roas,
+        ctr,
+        cpc,
+        status: getStatus(roas),
+        startDate: String(campaign.tanggalMulai || campaign.tanggalAwal || "").split("T")[0],
+        endDate: String(campaign.tanggalAkhir || "").split("T")[0]
+      });
+    } catch (error) {
+      console.error(`Campaign ${campaignId} gagal dimuat:`, error);
+    }
   }
 
   reportData = result;
   filteredData = [...reportData];
   isLoaded = true;
-
-  console.log("FINAL REPORT DATA:", reportData);
 
   renderKPI(filteredData);
   renderTable(filteredData);
@@ -206,8 +214,8 @@ function applyFilter() {
   filteredData = reportData.filter(item => {
     const matchChannel = channel === "all" || item.channel === channel;
     const matchStatus = status === "all" || item.status === status;
-    const matchStartDate = !startDate || !item.date || item.date >= startDate;
-    const matchEndDate = !endDate || !item.date || item.date <= endDate;
+    const matchStartDate = !startDate || !item.endDate || item.endDate >= startDate;
+    const matchEndDate = !endDate || !item.startDate || item.startDate <= endDate;
 
     return matchChannel && matchStatus && matchStartDate && matchEndDate;
   });
@@ -230,12 +238,12 @@ function resetFilter() {
 
 function exportReport(type) {
   if (!isLoaded) {
-    alert("Data masih loading. Tunggu dulu, jangan barbar klik tombol.");
+    alert("Data masih dimuat. Silakan tunggu.");
     return;
   }
 
   if (!filteredData.length) {
-    alert("Data kosong. Cek console FINAL REPORT DATA.");
+    alert("Tidak ada data untuk diekspor.");
     return;
   }
 
@@ -278,24 +286,40 @@ function exportCSV(type) {
     item.status
   ]);
 
+  const isExcel = type === "Excel";
+  const delimiter = isExcel ? "\t" : ",";
+  const escapeValue = value => {
+    const text = String(value ?? "");
+
+    if (isExcel) {
+      return text.replace(/\t|\r?\n/g, " ");
+    }
+
+    return `"${text.replace(/"/g, '""')}"`;
+  };
+
   const csvContent = [
-    header.join(","),
-    ...rows.map(row => row.map(value => `"${value}"`).join(","))
-  ].join("\n");
+    header.map(escapeValue).join(delimiter),
+    ...rows.map(row => row.map(escapeValue).join(delimiter))
+  ].join("\r\n");
 
   const blob = new Blob([csvContent], {
-    type: "text/csv;charset=utf-8;"
+    type: isExcel
+      ? "application/vnd.ms-excel;charset=utf-8;"
+      : "text/csv;charset=utf-8;"
   });
 
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = type === "Excel"
+  link.download = isExcel
     ? "campren-export-report.xls"
     : "campren-export-report.csv";
 
+  document.body.appendChild(link);
   link.click();
+  link.remove();
   URL.revokeObjectURL(url);
 }
 
@@ -312,7 +336,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("reportTable").innerHTML = `
       <tr>
         <td colspan="12" class="empty">
-          Gagal load data dari API. Cek console, jangan nebak-nebak kayak dukun frontend.
+          Gagal memuat data laporan.
         </td>
       </tr>
     `;

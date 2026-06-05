@@ -12,8 +12,13 @@ let achievementChart = null;
 let allComparisonData = [];
 
 function getUserId() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  return user.userId || user.id || 3;
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user.userId || user.id || null;
+  } catch (error) {
+    console.error("Data user tidak valid:", error);
+    return null;
+  }
 }
 
 function formatRupiah(value) {
@@ -66,12 +71,17 @@ function getStatus(item) {
 
 async function fetchJson(url) {
   const res = await fetch(url);
+  const text = await res.text();
 
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} - ${url}`);
   }
 
-  return await res.json();
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(`Respons API bukan JSON valid - ${url}`);
+  }
 }
 
 function normalizePerformance(raw) {
@@ -85,6 +95,10 @@ function normalizePerformance(raw) {
 async function loadComparisonData() {
   const userId = getUserId();
 
+  if (!userId) {
+    throw new Error("User belum login");
+  }
+
   const campaigns = await fetchJson(`${BASE_URL}/GetUserCampaigns/${userId}`);
 
   const result = [];
@@ -94,41 +108,42 @@ async function loadComparisonData() {
 
     if (!campaignId) continue;
 
-    const performanceRaw = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
+    try {
+      const performanceRaw = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
+      const reportCampaign = performanceRaw.campaign || campaignItem;
+      const performanceList = normalizePerformance(performanceRaw);
+      const campaignName = getSafeCampaignName(reportCampaign);
+      const channel = getChannelName(reportCampaign.platformId || campaignItem.platformId);
 
-    const reportCampaign = performanceRaw.campaign || campaignItem;
-    const performanceList = normalizePerformance(performanceRaw);
+      const targetRevenue = Number(
+        reportCampaign.targetIncome ||
+        reportCampaign.targetRevenue ||
+        campaignItem.targetIncome ||
+        campaignItem.targetRevenue ||
+        0
+      );
 
-    const campaignName = getSafeCampaignName(reportCampaign);
-    const channel = getChannelName(reportCampaign.platformId || campaignItem.platformId);
+      const actualRevenue = performanceList.reduce((sum, p) => {
+        return sum + Number(p.revenue || p.income || p.actualRevenue || 0);
+      }, 0);
 
-    const targetRevenue = Number(
-      reportCampaign.targetIncome ||
-      reportCampaign.targetRevenue ||
-      campaignItem.targetIncome ||
-      campaignItem.targetRevenue ||
-      0
-    );
+      const difference = actualRevenue - targetRevenue;
+      const achievement = targetRevenue > 0
+        ? (actualRevenue / targetRevenue) * 100
+        : 0;
 
-    const actualRevenue = performanceList.reduce((sum, p) => {
-      return sum + Number(p.revenue || p.income || p.actualRevenue || 0);
-    }, 0);
-
-    const difference = actualRevenue - targetRevenue;
-
-    const achievement = targetRevenue > 0
-      ? (actualRevenue / targetRevenue) * 100
-      : 0;
-
-    result.push({
-      campaignId,
-      campaign: campaignName,
-      channel,
-      targetRevenue,
-      actualRevenue,
-      difference,
-      achievement
-    });
+      result.push({
+        campaignId,
+        campaign: campaignName,
+        channel,
+        targetRevenue,
+        actualRevenue,
+        difference,
+        achievement
+      });
+    } catch (error) {
+      console.error(`Campaign ${campaignId} gagal dimuat:`, error);
+    }
   }
 
   return result;
@@ -422,10 +437,7 @@ async function initComparisonPage() {
     renderAll();
   } catch (err) {
     console.error("Comparison page error:", err);
-
-    alert(
-      "Gagal load comparison data. Cek BASE_URL, API, CORS, atau field targetIncome. Backend dramanya kambuh."
-    );
+    alert(err.message || "Gagal memuat data comparison.");
   }
 }
 
