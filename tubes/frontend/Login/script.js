@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const password = passwordInput.value.trim();
 
         if (!email || !password) {
-            showMessage("error", "Email dan password wajib diisi. Masa login pakai niat doang.");
+            showMessage("error", "Email dan password wajib diisi.");
             return;
         }
 
@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         } catch (err) {
             console.error(err);
-            showMessage("error", "Server error. Backend-nya lagi drama.");
+            showMessage("error", "Server error. Coba lagi nanti.");
         }
 
         setLoading(false);
