@@ -183,7 +183,7 @@ function renderComparisonCards(data) {
   if (!data.length) {
     wrapper.innerHTML = `
       <div class="empty-state">
-        Data comparison kosong. Backend-nya belum ngasih makan, jadi UI-nya bengong.
+        Data campaign tidak ditemukan.
       </div>
     `;
     return;
