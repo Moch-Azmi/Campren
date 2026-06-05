@@ -11,8 +11,13 @@ let roasChart = null;
 let revenueChart = null;
 
 function getUserId() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  return user.userId || user.id || 3;
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user.userId || user.id || null;
+  } catch (error) {
+    console.error("Data user tidak valid:", error);
+    return null;
+  }
 }
 
 function formatRupiah(value) {
@@ -36,6 +41,10 @@ function getChannelName(platformId) {
 }
 
 function getStatus(item) {
+  if (item.targetRoas <= 0) {
+    return { text: "No Target", className: "warning" };
+  }
+
   if (item.roas >= item.targetRoas) {
     return { text: "Above Target", className: "good" };
   }
@@ -49,12 +58,21 @@ function getStatus(item) {
 
 async function fetchJson(url) {
   const res = await fetch(url);
+  const text = await res.text();
 
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} - ${url}`);
   }
 
-  return await res.json();
+  if (!text) {
+    throw new Error(`Respons API kosong - ${url}`);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(`Respons API bukan JSON valid - ${url}`);
+  }
 }
 
 function normalizePerformance(data) {
@@ -73,6 +91,10 @@ function getRoasValue(data) {
 async function loadTrackingData() {
   const userId = getUserId();
 
+  if (!userId) {
+    throw new Error("User belum login");
+  }
+
   const campaigns = await fetchJson(`${BASE_URL}/GetUserCampaigns/${userId}`);
   const trackingData = [];
 
@@ -86,7 +108,6 @@ async function loadTrackingData() {
 
     try {
       const performanceRaw = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
-      const roasRaw = await fetchJson(`${BASE_URL}/roas/${campaignId}`);
 
       const campaign = performanceRaw.campaign || item;
       const performanceList = normalizePerformance(performanceRaw);
@@ -100,21 +121,18 @@ async function loadTrackingData() {
       }, 0);
 
       const targetRevenue = Number(campaign.targetIncome || campaign.targetRevenue || 0);
-      const targetRoas = adSpend > 0 ? targetRevenue / adSpend : 0;
-      const roas = getRoasValue(roasRaw);
+      const budget = Number(campaign.budget || campaign.Budget || 0);
+      const targetRoas = budget > 0 ? targetRevenue / budget : 0;
+      const manualRoas = adSpend > 0 ? revenue / adSpend : 0;
 
-      console.log("Campaign:", campaign);
-      console.log("Item:", item);
-      console.log("Platform ID kebaca:", 
-        campaign.platformId ||
-        campaign.PlatformID ||
-        campaign.platformID ||
-        campaign.platform_id ||
-        item.platformId ||
-        item.PlatformID ||
-        item.platformID ||
-        item.platform_id
-      );
+      let roas = manualRoas;
+
+      try {
+        const roasRaw = await fetchJson(`${BASE_URL}/roas/${campaignId}`);
+        roas = getRoasValue(roasRaw) || manualRoas;
+      } catch (error) {
+        console.warn(`ROAS API campaign ${campaignId} gagal, memakai hitungan manual.`, error);
+      }
       
       trackingData.push({
         campaign: campaign.namaCampaign || campaign.name || "-",
@@ -129,6 +147,7 @@ async function loadTrackingData() {
           item.platformID ||
           item.platform_id
         ),
+        budget,
         adSpend,
         targetRevenue,
         revenue,
@@ -149,9 +168,10 @@ function renderKpi(trackingData) {
   const totalSpend = trackingData.reduce((sum, item) => sum + item.adSpend, 0);
   const totalRevenue = trackingData.reduce((sum, item) => sum + item.revenue, 0);
   const avgRoas = totalSpend > 0 ? totalRevenue / totalSpend : 0;
+  const channelData = aggregateByChannel(trackingData);
 
-  const best = trackingData.length
-    ? trackingData.reduce((prev, curr) => curr.roas > prev.roas ? curr : prev)
+  const best = channelData.length
+    ? channelData.reduce((prev, curr) => curr.roas > prev.roas ? curr : prev)
     : null;
 
   document.getElementById("totalSpend").textContent = formatRupiah(totalSpend);
@@ -207,23 +227,24 @@ function renderTable(trackingData) {
 
 function renderRoasChart(trackingData) {
   const ctx = document.getElementById("roasBarChart");
+  const channelData = aggregateByChannel(trackingData);
 
   if (roasChart) roasChart.destroy();
 
   roasChart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: trackingData.map(item => item.channel),
+      labels: channelData.map(item => item.channel),
       datasets: [
         {
           label: "ROAS",
-          data: trackingData.map(item => item.roas),
-          backgroundColor: trackingData.map(item => channelColors[item.channel] || channelColors.Unknown),
+          data: channelData.map(item => item.roas),
+          backgroundColor: channelData.map(item => channelColors[item.channel] || channelColors.Unknown),
           borderRadius: 10
         },
         {
           label: "Target ROAS",
-          data: trackingData.map(item => item.targetRoas),
+          data: channelData.map(item => item.targetRoas),
           backgroundColor: "#3f3f46",
           borderRadius: 10
         }
@@ -256,17 +277,18 @@ function renderRoasChart(trackingData) {
 
 function renderRevenueChart(trackingData) {
   const ctx = document.getElementById("revenueDonutChart");
+  const channelData = aggregateByChannel(trackingData);
 
   if (revenueChart) revenueChart.destroy();
 
   revenueChart = new Chart(ctx, {
     type: "doughnut",
     data: {
-      labels: trackingData.map(item => item.channel),
+      labels: channelData.map(item => item.channel),
       datasets: [
         {
-          data: trackingData.map(item => item.revenue),
-          backgroundColor: trackingData.map(item => channelColors[item.channel] || channelColors.Unknown),
+          data: channelData.map(item => item.revenue),
+          backgroundColor: channelData.map(item => channelColors[item.channel] || channelColors.Unknown),
           borderColor: "#18181d",
           borderWidth: 4
         }
@@ -288,6 +310,36 @@ function renderRevenueChart(trackingData) {
   });
 }
 
+function aggregateByChannel(trackingData) {
+  const channelMap = new Map();
+
+  trackingData.forEach(item => {
+    const channel = channelMap.get(item.channel) || {
+      channel: item.channel,
+      budget: 0,
+      adSpend: 0,
+      targetRevenue: 0,
+      revenue: 0
+    };
+
+    channel.budget += item.budget;
+    channel.adSpend += item.adSpend;
+    channel.targetRevenue += item.targetRevenue;
+    channel.revenue += item.revenue;
+    channelMap.set(item.channel, channel);
+  });
+
+  return Array.from(channelMap.values()).map(channel => ({
+    ...channel,
+    targetRoas: channel.budget > 0
+      ? channel.targetRevenue / channel.budget
+      : 0,
+    roas: channel.adSpend > 0
+      ? channel.revenue / channel.adSpend
+      : 0
+  }));
+}
+
 async function initTracking() {
   try {
     const trackingData = await loadTrackingData();
@@ -299,7 +351,7 @@ async function initTracking() {
 
   } catch (err) {
     console.error("Tracking fatal error:", err);
-    alert("Gagal load campaign utama. Cek endpoint GetUserCampaigns/userId.");
+    alert(err.message || "Gagal memuat data tracking.");
   }
 }
 
