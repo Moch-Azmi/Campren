@@ -371,15 +371,21 @@ const payload = {
 
 function collectFormData() {
   return {
-    namaCampaign: document.getElementById('namaCampaign').value,
+    namaCampaign: document.getElementById('namaCampaign').value.trim(),
+
+    namaProduk: document.getElementById('namaProduk').value.trim(),
+
     channel: selectedChannel,
 
     tanggalMulai: tanggalMulaiInput.value,
     tanggalBerakhir: tanggalBerakhirInput.value,
 
     anggaran: parseFloat(document.getElementById('anggaran').value) || 0,
+
     targetViews: parseFloat(document.getElementById('targetViews').value) || 0,
+
     targetClicks: parseFloat(document.getElementById('targetClicks').value) || 0,
+
     targetRevenue: parseFloat(document.getElementById('targetRevenue').value) || 0
   };
 }
@@ -393,10 +399,17 @@ function validateForm(data) {
     };
   }
 
+  if (!data.namaProduk) {
+    return {
+      valid: false,
+      message: 'Nama produk wajib diisi'
+    };
+  }
+
   if (!data.channel) {
     return {
       valid: false,
-      message: 'Pilih channel dulu'
+      message: 'Pilih channel terlebih dahulu'
     };
   }
 
@@ -421,7 +434,37 @@ function validateForm(data) {
     };
   }
 
-  return { valid: true };
+  if (data.anggaran <= 0) {
+    return {
+      valid: false,
+      message: 'Data anggaran wajib diisi'
+    };
+  }
+
+  if (data.targetRevenue <= 0) {
+    return {
+      valid: false,
+      message: 'Target revenue wajib diisi'
+    };
+  }
+
+  if (data.targetViews <= 0) {
+    return {
+      valid: false,
+      message: 'Target views wajib diisi'
+    };
+  }
+
+  if (data.targetClicks <= 0) {
+    return {
+      valid: false,
+      message: 'Target clicks wajib diisi'
+    };
+  }
+
+  return {
+    valid: true
+  };
 }
 
 function showToast(message, type = 'success') {
@@ -447,4 +490,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Init sidebar step pertama sebagai active
   updateSidebarProgress(0);
+});
+
+document.getElementById("anggaran").classList.add("error");
+input.addEventListener("input", () => {
+  input.classList.remove("error");
 });
