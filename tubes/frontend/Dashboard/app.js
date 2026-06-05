@@ -407,6 +407,8 @@ async function loadDashboard() {
 
       const campaignName =
         campaignInfo.namaCampaign || "Campaign";
+        console.log("campaignInfo =", campaignInfo);
+        console.log("campaignName =", campaignInfo.namaCampaign);
 
       const platformId =
         campaignInfo.platformId || 1;
