@@ -41,6 +41,15 @@ function normalizeArray(data) {
   return [];
 }
 
+function formatDate(value) {
+  if (value === undefined || value === null || value === "") {
+    return "-";
+  }
+
+  const dateText = value.toString();
+  return dateText.includes("T") ? dateText.split("T")[0] : dateText;
+}
+
 const areaCanvas = document.getElementById("areaChart");
 let areaChart = null;
 
@@ -418,15 +427,24 @@ async function loadDashboard() {
           campaignInfo.targetIncome
         ) || 0;
 
-        const tanggalMulai =
-        (campaignInfo.tanggalMulai || campaignInfo.TanggalMulai || "-")
-          .toString()
-          .split("T")[0];
+      const tanggalMulai = formatDate(getVal(
+        campaignInfo,
+        [
+          "tanggalAwal",
+          "tanggalMulai",
+          "TanggalAwal",
+          "TanggalMulai",
+          "tanggal_awal",
+          "tanggal_mulai"
+        ],
+        "-"
+      ));
 
-      const tanggalAkhir =
-        (campaignInfo.tanggalAkhir || campaignInfo.TanggalAkhir || "-")
-          .toString()
-          .split("T")[0];
+      const tanggalAkhir = formatDate(getVal(
+        campaignInfo,
+        ["tanggalAkhir", "TanggalAkhir", "tanggal_akhir"],
+        "-"
+      ));
 
       /* total spend dari cost */
       const campaignSpend =
