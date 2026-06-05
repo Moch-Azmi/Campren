@@ -272,6 +272,23 @@ async function saveCampaign() {
     return;
   }
 
+  let userData;
+
+  try {
+    userData = JSON.parse(localStorage.getItem("user") || "{}");
+  } catch (error) {
+    console.error("Data user tidak valid:", error);
+    showToast("Data login tidak valid. Silakan login ulang.", "error");
+    return;
+  }
+
+  const userId = userData?.userId || userData?.id;
+
+  if (!userId) {
+    showToast("User belum login", "error");
+    return;
+  }
+
   const btn = document.getElementById('btnSave');
 
   btn.disabled = true;
@@ -280,40 +297,21 @@ async function saveCampaign() {
   // mapping channel ke platformId
   const platformMap = {
     instagram: 1,
-    tiktok: 2,
-    youtube: 3
+    youtube: 2,
+    tiktok: 3
   };
 
-  // payload sesuai API backend
- const userData = JSON.parse(localStorage.getItem("user"));
-
-const userId =
-  userData?.userId ||
-  userData?.id;
-
-if (!userId) {
-  showToast("User belum login", "error");
-  return;
-}
-
-const payload = {
-  userId: userId,
-
-  platformId: platformMap[data.channel],
-
-  namaCampaign: data.namaCampaign,
-
-  budget: data.anggaran,
-
-  tanggalMulai: data.tanggalMulai,
-  tanggalAkhir: data.tanggalBerakhir,
-
-  targetViews: data.targetViews,
-
-  targetClicks: data.targetClicks,
-
-  targetIncome: data.targetRevenue
-};
+  const payload = {
+    userId,
+    platformId: platformMap[data.channel],
+    namaCampaign: data.namaCampaign,
+    budget: data.anggaran,
+    tanggalMulai: data.tanggalMulai,
+    tanggalAkhir: data.tanggalBerakhir,
+    targetViews: data.targetViews,
+    targetClicks: data.targetClicks,
+    targetIncome: data.targetRevenue
+  };
 
   try {
 
@@ -333,8 +331,8 @@ const payload = {
     // ambil response text/json
     const result = await response.text();
 
-    if (!response.ok) {
-      throw new Error(result);
+    if (!response.ok || result.trim().toLowerCase() !== "campaign created") {
+      throw new Error(result || `HTTP ${response.status}`);
     }
 
     console.log('SUCCESS:', result);
@@ -380,13 +378,13 @@ function collectFormData() {
     tanggalMulai: tanggalMulaiInput.value,
     tanggalBerakhir: tanggalBerakhirInput.value,
 
-    anggaran: parseFloat(document.getElementById('anggaran').value) || 0,
+    anggaran: Number(document.getElementById('anggaran').value) || 0,
 
-    targetViews: parseFloat(document.getElementById('targetViews').value) || 0,
+    targetViews: Number(document.getElementById('targetViews').value) || 0,
 
-    targetClicks: parseFloat(document.getElementById('targetClicks').value) || 0,
+    targetClicks: Number(document.getElementById('targetClicks').value) || 0,
 
-    targetRevenue: parseFloat(document.getElementById('targetRevenue').value) || 0
+    targetRevenue: Number(document.getElementById('targetRevenue').value) || 0
   };
 }
 
@@ -441,6 +439,18 @@ function validateForm(data) {
     };
   }
 
+  if (
+    !Number.isInteger(data.anggaran) ||
+    !Number.isInteger(data.targetRevenue) ||
+    !Number.isInteger(data.targetViews) ||
+    !Number.isInteger(data.targetClicks)
+  ) {
+    return {
+      valid: false,
+      message: 'Anggaran dan seluruh target harus berupa bilangan bulat'
+    };
+  }
+
   if (data.targetRevenue <= 0) {
     return {
       valid: false,
@@ -490,9 +500,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Init sidebar step pertama sebagai active
   updateSidebarProgress(0);
-});
 
-document.getElementById("anggaran").classList.add("error");
-input.addEventListener("input", () => {
-  input.classList.remove("error");
+  document.querySelectorAll(".form-input").forEach(input => {
+    input.addEventListener("input", () => {
+      input.classList.remove("error");
+    });
+  });
 });
