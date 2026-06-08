@@ -95,9 +95,23 @@
     });
   }
 
+  function logout() {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    sessionStorage.clear();
+    window.location.replace("../Login/index.html");
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("[data-logout]").forEach(button => {
+      button.addEventListener("click", logout);
+    });
+  });
+
   window.CamprenPageState = {
     getUserId,
     requireLogin,
-    showLoadError
+    showLoadError,
+    logout
   };
 })();
