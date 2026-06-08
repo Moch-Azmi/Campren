@@ -340,16 +340,31 @@ function renderAll() {
 }
 
 async function initProductBreakdown() {
+  if (!CamprenPageState.requireLogin(
+    ".content",
+    "Masuk ke akun CAMPREN untuk melihat breakdown performa produk dan campaign."
+  )) {
+    return;
+  }
+
   try {
     allProducts = await loadProductData();
     renderAll();
   } catch (err) {
     console.error("Product breakdown error:", err);
-    alert(err.message || "Gagal memuat breakdown produk.");
+    CamprenPageState.showLoadError(
+      ".content",
+      "Breakdown produk belum bisa dimuat. Periksa koneksi lalu coba lagi."
+    );
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  if (!CamprenPageState.getUserId()) {
+    initProductBreakdown();
+    return;
+  }
+
   document.getElementById("searchInput").addEventListener("input", renderAll);
   document.getElementById("channelFilter").addEventListener("change", renderAll);
   initProductBreakdown();

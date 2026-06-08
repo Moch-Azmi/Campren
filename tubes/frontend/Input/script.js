@@ -263,6 +263,14 @@ function calculateAllPreview() {
 // ============================================================
 
 async function saveCampaign() {
+  if (!CamprenPageState.getUserId()) {
+    CamprenPageState.requireLogin(
+      "#formScroll",
+      "Masuk ke akun CAMPREN untuk membuat dan menyimpan campaign baru."
+    );
+    return;
+  }
+
 
   const data = collectFormData();
   const validation = validateForm(data);
@@ -492,6 +500,13 @@ function showToast(message, type = 'success') {
 // INIT – jalankan saat DOM siap
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+  if (!CamprenPageState.requireLogin(
+    "#formScroll",
+    "Masuk ke akun CAMPREN untuk membuat dan menyimpan campaign baru."
+  )) {
+    return;
+  }
+
   // Set section pertama langsung terlihat
   const firstSection = document.getElementById('section-1');
   if (firstSection) {

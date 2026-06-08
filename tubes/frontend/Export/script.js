@@ -328,17 +328,20 @@ function goBack() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  if (!CamprenPageState.requireLogin(
+    ".page",
+    "Masuk ke akun CAMPREN untuk membuat dan mengunduh laporan campaign."
+  )) {
+    return;
+  }
+
   loadReportData().catch(err => {
     console.error("EXPORT ERROR:", err);
 
     isLoaded = true;
-
-    document.getElementById("reportTable").innerHTML = `
-      <tr>
-        <td colspan="12" class="empty">
-          Gagal memuat data laporan.
-        </td>
-      </tr>
-    `;
+    CamprenPageState.showLoadError(
+      ".page",
+      "Laporan belum bisa dimuat. Periksa koneksi lalu coba lagi."
+    );
   });
 });

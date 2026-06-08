@@ -341,6 +341,13 @@ function aggregateByChannel(trackingData) {
 }
 
 async function initTracking() {
+  if (!CamprenPageState.requireLogin(
+    ".content",
+    "Masuk ke akun CAMPREN untuk memantau spend, revenue, dan ROAS campaign kamu."
+  )) {
+    return;
+  }
+
   try {
     const trackingData = await loadTrackingData();
 
@@ -351,7 +358,10 @@ async function initTracking() {
 
   } catch (err) {
     console.error("Tracking fatal error:", err);
-    alert(err.message || "Gagal memuat data tracking.");
+    CamprenPageState.showLoadError(
+      ".content",
+      "Data tracking belum bisa dimuat. Periksa koneksi lalu coba lagi."
+    );
   }
 }
 

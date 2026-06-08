@@ -333,14 +333,11 @@ async function loadDashboard() {
   try {
     console.log("LOAD DASHBOARD");
 
-    const userData = JSON.parse(localStorage.getItem("user"));
+    const userId = CamprenPageState.getUserId();
 
-    if (!userData) {
-      alert("User belum login");
-      return;
-    }
+    if (!userId) return;
 
-    const userId = userData.userId || userData.id || 3;
+    const userData = JSON.parse(localStorage.getItem("user") || "{}");
 
     const campaignListResult = await safeJsonFetch(
       `${BASE_URL}/GetUserCampaigns/${userId}`
@@ -676,7 +673,10 @@ async function loadDashboard() {
     }
   } catch (err) {
     console.error(err);
-    showToast(err.message || "Gagal load dashboard", "error");
+    CamprenPageState.showLoadError(
+      ".content",
+      "Dashboard belum bisa dimuat. Periksa koneksi lalu coba lagi."
+    );
   }
 } 
 
@@ -755,6 +755,13 @@ function updateDonutChart(channelTotals) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  if (!CamprenPageState.requireLogin(
+    ".content",
+    "Masuk ke akun CAMPREN untuk melihat ringkasan dan performa campaign kamu."
+  )) {
+    return;
+  }
+
   loadDashboard();
 
   document
