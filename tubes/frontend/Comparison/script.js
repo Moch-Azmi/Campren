@@ -11,6 +11,92 @@ let comparisonRevenueChart = null;
 let achievementChart = null;
 let allComparisonData = [];
 
+function showPageState({
+  type = "error",
+  title,
+  message,
+  primaryLabel,
+  primaryHref,
+  secondaryLabel,
+  secondaryHref
+}) {
+  const content = document.querySelector(".content");
+
+  if (!content) return;
+
+  const isAuthState = type === "auth";
+  const icon = isAuthState
+    ? `
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true">
+        <rect x="5" y="10" width="14" height="10" rx="2"></rect>
+        <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+      </svg>
+    `
+    : `
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M12 8v5"></path>
+        <path d="M12 17h.01"></path>
+      </svg>
+    `;
+
+  content.classList.add("page-state-content");
+  content.innerHTML = `
+    <section class="page-state-card" role="status" aria-live="polite">
+      <div class="page-state-glow"></div>
+      <div class="page-state-icon ${isAuthState ? "auth" : "error"}">
+        ${icon}
+      </div>
+      <div class="page-state-eyebrow">
+        ${isAuthState ? "AKSES TERBATAS" : "DATA TIDAK TERSEDIA"}
+      </div>
+      <h2 class="page-state-title">${title}</h2>
+      <p class="page-state-message">${message}</p>
+      <div class="page-state-actions">
+        <a class="page-state-button primary" href="${primaryHref}">
+          ${primaryLabel}
+        </a>
+        ${
+          secondaryLabel && secondaryHref
+            ? `
+              <a class="page-state-button secondary" href="${secondaryHref}">
+                ${secondaryLabel}
+              </a>
+            `
+            : ""
+        }
+      </div>
+    </section>
+  `;
+}
+
+function showLoggedOutState() {
+  showPageState({
+    type: "auth",
+    title: "Login diperlukan",
+    message:
+      "Masuk ke akun CAMPREN untuk melihat perbandingan target dan performa campaign kamu.",
+    primaryLabel: "Masuk ke akun",
+    primaryHref: "../Login/index.html",
+    secondaryLabel: "Buat akun baru",
+    secondaryHref: "../Registrasi/index.html"
+  });
+}
+
+function showLoadErrorState() {
+  showPageState({
+    title: "Data gagal dimuat",
+    message:
+      "Terjadi kendala saat mengambil data comparison. Coba muat ulang halaman ini.",
+    primaryLabel: "Muat ulang",
+    primaryHref: window.location.href
+  });
+}
+
 function getUserId() {
   try {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -432,12 +518,17 @@ function renderAll() {
 }
 
 async function initComparisonPage() {
+  if (!getUserId()) {
+    showLoggedOutState();
+    return;
+  }
+
   try {
     allComparisonData = await loadComparisonData();
     renderAll();
   } catch (err) {
     console.error("Comparison page error:", err);
-    alert(err.message || "Gagal memuat data comparison.");
+    showLoadErrorState();
   }
 }
 
