@@ -1,0 +1,5 @@
+# Local Spring configuration may contain credentials.
+**/application.properties
+
+# Maven build output.
+**/target/
