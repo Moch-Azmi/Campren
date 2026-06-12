@@ -5,6 +5,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const passwordInput = document.getElementById("password");
     const loginMessage = document.getElementById("loginMessage");
 
+    const roleTabs = document.querySelectorAll(".role-tab");
+    let selectedRole = "1"; // "1" = User, "2" = Admin
+
+    roleTabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+            roleTabs.forEach(t => t.classList.remove("active"));
+            tab.classList.add("active");
+            selectedRole = tab.getAttribute("data-role");
+            clearMessage();
+        });
+    });
+
     function showMessage(type, text) {
         loginMessage.textContent = text;
         loginMessage.className = `login-message show ${type}`;
@@ -57,13 +69,29 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("LOGIN:", result);
 
             if (res.ok && result.status === "registered") {
+                const responseRoleId = Number(result.roleId);
+                const targetRoleNum = Number(selectedRole);
+
+                if (responseRoleId !== targetRoleNum) {
+                    const roleName = targetRoleNum === 1 ? "User" : "Admin";
+                    showMessage("error", `Gagal masuk: Akun ini bukan akun ${roleName}.`);
+                    setLoading(false);
+                    return;
+                }
+
                 localStorage.setItem("user", JSON.stringify(result));
 
-                showMessage("success", "Login berhasil. Mengalihkan ke dashboard...");
-
-                setTimeout(() => {
-                    window.location.href = "../Dashboard/index.html";
-                }, 900);
+                if (targetRoleNum === 2) {
+                    showMessage("success", "Login berhasil. Mengalihkan ke Admin panel...");
+                    setTimeout(() => {
+                        window.location.href = "../Admin/index.html";
+                    }, 900);
+                } else {
+                    showMessage("success", "Login berhasil. Mengalihkan ke dashboard...");
+                    setTimeout(() => {
+                        window.location.href = "../Dashboard/index.html";
+                    }, 900);
+                }
             } else {
                 showMessage("error", "Email atau password salah.");
             }

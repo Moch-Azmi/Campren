@@ -102,6 +102,43 @@ body {
     font-weight: 500;
 }
 
+.role-selector {
+    display: flex;
+    background-color: #2b2b30;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+.role-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #a3a3a3;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 12px 0;
+    border-radius: 7px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+    user-select: none;
+}
+
+.role-tab:hover {
+    color: #ffffff;
+}
+
+.role-tab.active {
+    background: linear-gradient(135deg, #5C5CDA 0%, #8A38F5 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(92, 92, 218, 0.35);
+}
+
 .form-group {
     margin-bottom: 20px;
 }
