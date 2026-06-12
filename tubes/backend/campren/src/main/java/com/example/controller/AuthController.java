@@ -99,6 +99,7 @@ public class AuthController {
 
             response.put("status", "registered");
             response.put("userId", user.get().getUserId());
+            response.put("roleId", user.get().getRoleId());
             response.put("email", user.get().getEmail());
             response.put("nama", user.get().getNama());
 
@@ -280,6 +281,28 @@ return json;
                 new HashMap<>();
 
             data.put("campaignId",
+                campaign.getCampaignId());
+
+            response.add(data);
+        }
+
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/GetAllCampaigns")
+    public ResponseEntity<?> getAllCampaigns() {
+
+    List<Campaign> campaigns =
+            campaignRepository.findAll();
+
+    List<Map<String, Object>> response =
+            new ArrayList<>();
+
+    for (Campaign campaign : campaigns) {
+
+        Map<String, Object> data =
+                new HashMap<>();
+
+        data.put("campaignId",
                 campaign.getCampaignId());
 
             response.add(data);
