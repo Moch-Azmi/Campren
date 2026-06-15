@@ -12,6 +12,10 @@
 ![erd](erd.jpeg)
 
 ---
+# Class Diagram
+![classdiagram](classdiagram.jpeg)
+
+---
 
 # DATA FLOW DIAGRAM (DFD)
 ## DFD level 0
