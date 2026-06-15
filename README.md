@@ -2,6 +2,7 @@
 ## Aplikasi Campren adalah aplikasi yang berfungsi untuk menghitung revenue dan roas dari campaign
  Anggota: 
  - Darren Christian Lomban
+ - Mutiara Nafiza
  - Mochammad Azmi Najib Gunawan
  - Siti Zahratun Aini
  - Yafi Alifudin Pranaja
