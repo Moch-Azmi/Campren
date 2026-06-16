@@ -485,6 +485,8 @@ async function loadDashboard() {
       totalRevenue += actualRevenue;
       totalSpend += campaignSpend;
 
+      console.log(`Campaign: ${campaignName}, Performance items:`, performance.length);
+
       performance.forEach(item=>{
 
         const revenue =
@@ -494,6 +496,8 @@ async function loadDashboard() {
           Number(item.cost)||0;
 
         const tanggal = item.tanggal || item.Tanggal || "-";
+
+        console.log(`  Item tanggal: ${tanggal}, revenue: ${revenue}, cost: ${cost}`);
 
         if(!channelTotals[platformId]){
 
@@ -650,6 +654,9 @@ async function loadDashboard() {
     if (donutCenter) {
       donutCenter.textContent = `${finalRoas.toFixed(2)}x`;
     }
+
+    console.log("Final Chart Data:", chartMap);
+    console.log("Total Spend:", totalSpend, "Total Revenue:", totalRevenue);
 
     const roasProgress = document.getElementById("roasProgress");
 
