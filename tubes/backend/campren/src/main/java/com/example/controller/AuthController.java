@@ -1,379 +1,143 @@
 package com.example.controller;
 
-import com.example.model.Campaign;
 import com.example.model.Pelanggan;
 import com.example.model.Users;
-import com.example.model.PerformanceMetrics;
-import com.example.repository.CampaignRepository;
-
 import com.example.repository.PelangganRepository;
 import com.example.repository.UsersRepository;
-import com.example.repository.PerformanceMetricsRepository;
-import jakarta.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
 
     @Autowired
-    private PelangganRepository userRepository;
+    private PelangganRepository pelangganRepository;
 
     @Autowired
     private UsersRepository usersRepository;
 
-    @Autowired
-    private CampaignRepository campaignsRepository;
-
-    @Autowired
-    private PerformanceMetricsRepository performanceRepository;
-    
-    @Autowired
-    private CampaignRepository campaignRepository;
-    
-    @Autowired
-    private PerformanceMetricsRepository performanceMetricsRepository;
-
-
-    // ==================================================
+    // ==========================
     // REGISTER
-    // POST /api/register
-    // ==================================================
+    // POST : /api/auth/register
+    // ==========================
     @PostMapping("/register")
-    public String register(@RequestBody Pelanggan req) {
+    public ResponseEntity<?> register(@RequestBody Pelanggan req) {
 
         try {
 
-            if (userRepository.existsByEmail(req.getEmail())) {
-                return "email exists";
+            // cek email sudah terdaftar atau belum
+            if (pelangganRepository.existsByEmail(req.getEmail())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of(
+                                "status", "failed",
+                                "message", "Email sudah terdaftar"
+                        ));
             }
 
-            userRepository.save(req);
+            // simpan ke tabel pelanggan
+            pelangganRepository.save(req);
 
+            // simpan ke tabel users
             Users user = new Users();
-            user.setRoleId(1);
+            user.setRoleId(1); // 1 = Advertiser
             user.setEmail(req.getEmail());
             user.setNama(req.getNama());
 
             usersRepository.save(user);
 
-            return "registered";
+            return ResponseEntity.ok(
+                    Map.of(
+                            "status", "success",
+                            "message", "Registrasi berhasil"
+                    )
+            );
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return "failed";
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "status", "failed",
+                            "message", e.getMessage()
+                    ));
         }
     }
 
-
-    // ==================================================
+    // ==========================
     // LOGIN
-    // POST /api/login
-    // ==================================================
+    // POST : /api/auth/login
+    // ==========================
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Pelanggan req) {
 
-    Optional<Pelanggan> pelanggan =
-            userRepository.findByEmail(req.getEmail());
+        Optional<Pelanggan> pelanggan =
+                pelangganRepository.findByEmail(req.getEmail());
 
-    if (pelanggan.isPresent() &&
-        pelanggan.get().getPassword().equals(req.getPassword())) {
+        if (pelanggan.isPresent()
+                && pelanggan.get().getPassword().equals(req.getPassword())) {
 
-        Optional<Users> user =
-                usersRepository.findByEmail(req.getEmail());
+            Optional<Users> user =
+                    usersRepository.findByEmail(req.getEmail());
 
-        if (user.isPresent()) {
+            if (user.isPresent()) {
 
-            Map<String, Object> response = new HashMap<>();
+                Map<String, Object> response = new HashMap<>();
 
-            response.put("status", "registered");
-            response.put("userId", user.get().getUserId());
-            response.put("roleId", user.get().getRoleId());
-            response.put("email", user.get().getEmail());
-            response.put("nama", user.get().getNama());
+                response.put("status", "success");
+                response.put("userId", user.get().getUserId());
+                response.put("roleId", user.get().getRoleId());
+                response.put("email", user.get().getEmail());
+                response.put("nama", user.get().getNama());
 
-            return ResponseEntity.ok(response);
-        }
-    }
-
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-            .body(Map.of("status", "not registered"));
-    }
-
-
-    // ==================================================
-    // CHANGE PASSWORD
-    // PUT /api/change-password
-    // ==================================================
-    @PutMapping("/change-password")
-    public String changePassword(@RequestBody Pelanggan req) {
-
-        Optional<Pelanggan> user =
-                userRepository.findByEmail(req.getEmail());
-
-        if (user.isPresent()) {
-
-            Pelanggan pelanggan = user.get();
-            pelanggan.setPassword(req.getPassword());
-
-            userRepository.save(pelanggan);
-
-            return "success";
-        }
-
-        return "email not found";
-    }
-
-
-    // ==================================================
-    // CREATE CAMPAIGN
-    // POST /api/campaign
-    // ==================================================
-    @PostMapping("/campaign")
-    public String createCampaign(@RequestBody Campaign req) {
-
-        try {
-            campaignsRepository.save(req);
-            return "campaign created";
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "failed";
-        }
-    }
-
-
-    // ==================================================
-    // GET ROAS + CTR + CPC
-    // GET /api/roas/{id}
-    // ==================================================
-    @GetMapping("/roas/{id}")
-    public String getMetrics(@PathVariable Integer id) {
-
-        try {
-
-            List<PerformanceMetrics> data =
-                    performanceRepository.findByCampaignId(id);
-
-            if (data.isEmpty()) {
-                return "campaign not found";
+                return ResponseEntity.ok(response);
             }
-
-            long revenue = 0;
-            long cost = 0;
-            long clicks = 0;
-            long impression = 0;
-
-            for (PerformanceMetrics p : data) {
-                revenue += p.getRevenue();
-                cost += p.getCost();
-                clicks += p.getClicks();
-                impression += p.getImpression();
-            }
-
-            double roas = cost > 0 ? (double) revenue / cost : 0;
-            double ctr = impression > 0 ? ((double) clicks / impression) * 100 : 0;
-            double cpc = clicks > 0 ? (double) cost / clicks : 0;
-
-            String json =
-            "{"
-            + "\"roas\": " + String.format("%.2f", roas) + ","
-            + "\"ctr\": " + String.format("%.2f", ctr) + ","
-            + "\"cpc\": " + String.format("%.2f", cpc)
-            + "}";
-
-return json;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "failed";
-        }
-    }
-
-
-    // ==================================================
-    // PERFORMANCE REPORT
-    // GET /api/PerformanceReport/{id}
-    // ==================================================
-    @GetMapping("/PerformanceReport/{id}")
-    public String performanceReport(@PathVariable Integer id) {
-
-        try {
-
-            Optional<Campaign> campaign =
-                    campaignsRepository.findById(id);
-
-            if (!campaign.isPresent()) {
-                return "campaign not found";
-            }
-
-            List<PerformanceMetrics> metrics =
-                    performanceRepository.findByCampaignId(id);
-
-            String json =
-            "{"
-            + "\"campaign\": {"
-            + "\"campaignId\": " + campaign.get().getCampaignId() + ","
-            + "\"userId\": " + campaign.get().getUserId() + ","
-            + "\"platformId\": " + campaign.get().getPlatformId() + ","
-            + "\"namaCampaign\": \"" + campaign.get().getNamaCampaign() + "\","
-            + "\"budget\": " + campaign.get().getBudget() + ","
-            + "\"tanggalAwal\": \"" + campaign.get().getTanggalMulai() + "\","
-            + "\"tanggalAkhir\": \"" + campaign.get().getTanggalAkhir() + "\","
-            + "\"targetViews\": " + campaign.get().getTargetViews() + ","
-            + "\"targetClicks\": " + campaign.get().getTargetClicks() + ","
-            + "\"targetIncome\": " + campaign.get().getTargetIncome()
-            + "},"
-
-            + "\"performance\": [";
-
-            for (int i = 0; i < metrics.size(); i++) {
-
-                PerformanceMetrics p = metrics.get(i);
-
-                json +=
-                "{"
-                + "\"tanggal\": \"" + p.getTanggal() + "\","
-                + "\"impression\": " + p.getImpression() + ","
-                + "\"clicks\": " + p.getClicks() + ","
-                + "\"cost\": " + p.getCost() + ","
-                + "\"conversions\": " + p.getConversions() + ","
-                + "\"revenue\": " + p.getRevenue()
-                + "}";
-
-                if (i < metrics.size() - 1) {
-                    json += ",";
-                }
-            }
-
-            json += "]}";
-
-            return json;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "failed";
-        }
-    }
-    @GetMapping("/GetUserCampaigns/{userId}")
-    public ResponseEntity<?> getUserCampaigns(
-        @PathVariable Integer userId) {
-
-        List<Campaign> campaigns =
-            campaignRepository.findByUserId(userId);
-
-        List<Map<String, Object>> response =
-            new ArrayList<>();
-
-        for (Campaign campaign : campaigns) {
-
-            Map<String, Object> data =
-                new HashMap<>();
-
-            data.put("campaignId",
-                campaign.getCampaignId());
-
-            response.add(data);
         }
 
-        return ResponseEntity.ok(response);
-    }
-    @GetMapping("/GetAllCampaigns")
-    public ResponseEntity<?> getAllCampaigns() {
-
-    List<Campaign> campaigns =
-            campaignRepository.findAll();
-
-    List<Map<String, Object>> response =
-            new ArrayList<>();
-
-    for (Campaign campaign : campaigns) {
-
-        Map<String, Object> data =
-                new HashMap<>();
-
-        data.put("campaignId",
-                campaign.getCampaignId());
-
-            response.add(data);
-        }
-
-        return ResponseEntity.ok(response);
-    }
-    @Transactional
-    @DeleteMapping("/campaign/{campaignId}")
-        public ResponseEntity<?> deleteCampaign(
-            @PathVariable Integer campaignId) {
-
-        Optional<Campaign> campaign =
-                campaignRepository.findById(campaignId);
-
-        if (campaign.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of(
-                            "status", "failed",
-                            "message", "Campaign not found"
-                    ));
-        }
-
-        // Delete all performance metrics that belong to this campaign
-        performanceMetricsRepository.deleteByCampaignId(campaignId);
-
-        // Delete the campaign itself
-        campaignRepository.deleteById(campaignId);
-
-        return ResponseEntity.ok(
-                Map.of(
-                        "status", "success",
-                        "message", "Campaign deleted",
-                        "campaignId", campaignId
-                )
-        );
-    }
-    @PutMapping("/campaign/{campaignId}")
-        public ResponseEntity<?> editCampaign(
-        @PathVariable Integer campaignId,
-        @RequestBody Campaign updatedCampaign) {
-
-        Optional<Campaign> campaignOpt =
-            campaignRepository.findById(campaignId);
-
-        if (campaignOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of(
                         "status", "failed",
-                        "message", "Campaign not found"
+                        "message", "Email atau password salah"
                 ));
+    }
+
+    // ==========================
+    // CHANGE PASSWORD
+    // PUT : /api/auth/change-password
+    // ==========================
+    @PutMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @RequestBody Pelanggan req) {
+
+        Optional<Pelanggan> pelanggan =
+                pelangganRepository.findByEmail(req.getEmail());
+
+        if (pelanggan.isPresent()) {
+
+            Pelanggan user = pelanggan.get();
+            user.setPassword(req.getPassword());
+
+            pelangganRepository.save(user);
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "status", "success",
+                            "message", "Password berhasil diubah"
+                    )
+            );
         }
 
-        Campaign campaign = campaignOpt.get();
-
-        // Only editable fields
-        campaign.setNamaCampaign(updatedCampaign.getNamaCampaign());
-        campaign.setBudget(updatedCampaign.getBudget());
-        campaign.setTanggalAkhir(updatedCampaign.getTanggalAkhir());
-        campaign.setTargetClicks(updatedCampaign.getTargetClicks());
-        campaign.setTargetIncome(updatedCampaign.getTargetIncome());
-        campaign.setTargetViews(updatedCampaign.getTargetViews());
-
-        campaignRepository.save(campaign);
-
-        return ResponseEntity.ok(
-            Map.of(
-                    "status", "success",
-                    "message", "Campaign updated",
-                    "campaignId", campaignId
-            )
-        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "status", "failed",
+                        "message", "Email tidak ditemukan"
+                ));
     }
 }

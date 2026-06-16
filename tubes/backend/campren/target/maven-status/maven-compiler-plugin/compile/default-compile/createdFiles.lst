@@ -1,11 +1,15 @@
 com\example\LoginappApplication.class
 com\example\controller\AuthController.class
+com\example\controller\MetricsController.class
 com\example\model\CampaignReport.class
 com\example\repository\UsersRepository.class
 com\example\config\SecurityConfig.class
 com\example\model\Pelanggan.class
+com\example\controller\ReportController.class
+com\example\controller\CampaignController.class
 com\example\repository\CampaignRepository.class
 com\example\repository\PelangganRepository.class
+com\example\controller\UserController.class
 com\example\repository\PerformanceMetricsRepository.class
 com\example\model\Campaign.class
 com\example\model\Performance.class
