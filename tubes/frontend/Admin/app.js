@@ -118,7 +118,15 @@ async function loadAdminDashboard() {
         let userEmail = "-";
         if (userId && userId !== "-") {
           const userData = await safeJsonFetch(`${BASE_URL}/Users/${userId}`);
-          userEmail = userData?.email || userData?.Email || "-";
+          console.log("User data for ID", userId, ":", userData);
+          
+          // Try different field names for email
+          userEmail = userData?.email || 
+                      userData?.Email || 
+                      userData?.emailAddress || 
+                      userData?.EmailAddress || 
+                      userData?.email_address ||
+                      userId; // Fallback to userId if no email found
         }
         
         const platformId = campaignInfo.platformId || campaignInfo.platform_id || 1;
