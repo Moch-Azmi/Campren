@@ -88,7 +88,7 @@ let areaChart = null;
 
 if (areaCanvas) {
   areaChart = new Chart(areaCanvas, {
-    type: "bar",
+    type: "line",
 
     data: {
       labels: ["Total Ad Spend", "Total Revenue"],
@@ -96,14 +96,15 @@ if (areaCanvas) {
         {
           label: "Total",
           data: [0, 0],
-          borderColor: ["#3B82F6", "#34D399"],
-          backgroundColor: [
-            "rgba(59,130,246,0.55)",
-            "rgba(52,211,153,0.55)"
-          ],
-          borderRadius: 8,
-          borderWidth: 1,
-          maxBarThickness: 120
+          borderColor: "#34D399",
+          backgroundColor: "rgba(52,211,153,0.14)",
+          pointBackgroundColor: ["#3B82F6", "#34D399"],
+          pointBorderColor: ["#3B82F6", "#34D399"],
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35
         }
       ]
     },
