@@ -88,32 +88,22 @@ let areaChart = null;
 
 if (areaCanvas) {
   areaChart = new Chart(areaCanvas, {
-    type: "line",
+    type: "bar",
 
     data: {
-      labels: [],
+      labels: ["Total Ad Spend", "Total Revenue"],
       datasets: [
         {
-          label: "Revenue",
-          data: [],
-          borderColor: "#34D399",
-          backgroundColor: "rgba(52,211,153,0.15)",
-          pointRadius: 2,
-          pointHoverRadius: 4,
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: "Spend",
-          data: [],
-          borderColor: "#3B82F6",
-          backgroundColor: "rgba(59,130,246,0.15)",
-          pointRadius: 2,
-          pointHoverRadius: 4,
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4
+          label: "Total",
+          data: [0, 0],
+          borderColor: ["#3B82F6", "#34D399"],
+          backgroundColor: [
+            "rgba(59,130,246,0.55)",
+            "rgba(52,211,153,0.55)"
+          ],
+          borderRadius: 8,
+          borderWidth: 1,
+          maxBarThickness: 120
         }
       ]
     },
@@ -128,7 +118,7 @@ if (areaCanvas) {
         tooltip: {
           callbacks: {
             label(context) {
-              return `${context.dataset.label}: ${formatRupiah(context.parsed.y)}`;
+              return `${context.label}: ${formatRupiah(context.parsed.y)}`;
             }
           }
         }
@@ -416,7 +406,7 @@ async function loadDashboard() {
     document.querySelector(".roas-val").textContent = "0.00x";
     document.querySelector(".donut-center-val").textContent = "0.00x";
 
-    updateAreaChart({});
+    updateAreaChart(0, 0);
     updateDonutChart({
       1: { revenue: 0, spend: 0 },
       2: { revenue: 0, spend: 0 },
@@ -428,8 +418,6 @@ async function loadDashboard() {
 
     let totalRevenue = 0;
     let totalSpend = 0;
-
-    const chartMap = {};
 
     const channelTotals = {
       1: { revenue: 0, spend: 0 },
@@ -551,8 +539,6 @@ async function loadDashboard() {
           ["cost", "Cost", "spend", "Spend", "adSpend", "AdSpend"]
         );
 
-        const tanggal = getPerformanceDate(item);
-
         if(!channelTotals[platformId]){
 
           channelTotals[platformId]={
@@ -568,23 +554,6 @@ async function loadDashboard() {
 
         channelTotals[
           platformId
-        ].spend += cost;
-
-        if(!chartMap[tanggal]){
-
-          chartMap[tanggal]={
-            revenue:0,
-            spend:0
-          };
-
-        }
-
-        chartMap[
-          tanggal
-        ].revenue += revenue;
-
-        chartMap[
-          tanggal
         ].spend += cost;
 
       });
@@ -673,19 +642,6 @@ async function loadDashboard() {
       }
     }
 
-    const labels = sortChartLabels(Object.keys(chartMap));
-
-    if (labels.length === 0) {
-      labels.push("-");
-      chartMap["-"] = {
-        revenue: 0,
-        spend: 0
-      };
-    }
-
-    const revenueData = labels.map(label => chartMap[label].revenue);
-    const spendData = labels.map(label => chartMap[label].spend);
-
     const spendEl = document.querySelector(".spend-val");
     const revenueEl = document.querySelector(".revenue-val");
     const roasEl = document.querySelector(".roas-val");
@@ -709,12 +665,11 @@ async function loadDashboard() {
       donutCenter.textContent = `${finalRoas.toFixed(2)}x`;
     }
 
-    console.log("Final Chart Data:", chartMap);
     console.log("Total Spend:", totalSpend, "Total Revenue:", totalRevenue);
 
     const roasProgress = document.getElementById("roasProgress");
 
-    updateAreaChart(chartMap);
+    updateAreaChart(totalSpend, totalRevenue);
     updateDonutChart(channelTotals);
 
     const targetInput = document.getElementById("targetRevenue");
@@ -742,18 +697,10 @@ async function loadDashboard() {
 } 
 
 
-function updateAreaChart(chartMap) {
-  const labels = sortChartLabels(Object.keys(chartMap));
-
-  if (labels.length === 0) {
-    labels.push("-");
-    chartMap["-"] = { revenue: 0, spend: 0 };
-  }
-
+function updateAreaChart(totalSpend, totalRevenue) {
   if (areaChart) {
-    areaChart.data.labels = labels;
-    areaChart.data.datasets[0].data = labels.map(l => chartMap[l].revenue);
-    areaChart.data.datasets[1].data = labels.map(l => chartMap[l].spend);
+    areaChart.data.labels = ["Total Ad Spend", "Total Revenue"];
+    areaChart.data.datasets[0].data = [totalSpend, totalRevenue];
     areaChart.update();
   }
 }
