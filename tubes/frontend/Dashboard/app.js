@@ -420,7 +420,7 @@ async function loadDashboard() {
     document.querySelector(".roas-val").textContent = "0.00x";
     document.querySelector(".donut-center-val").textContent = "0.00x";
 
-    updateAreaChart({});
+    updateAreaChart(0, 0);
     updateDonutChart({
       1: { revenue: 0, spend: 0 },
       2: { revenue: 0, spend: 0 },
@@ -432,8 +432,6 @@ async function loadDashboard() {
 
     let totalRevenue = 0;
     let totalSpend = 0;
-
-    const chartMap = {};
 
     const channelTotals = {
       1: { revenue: 0, spend: 0 },
@@ -555,8 +553,6 @@ async function loadDashboard() {
           ["cost", "Cost", "spend", "Spend", "adSpend", "AdSpend"]
         );
 
-        const tanggal = getPerformanceDate(item);
-
         if(!channelTotals[platformId]){
 
           channelTotals[platformId]={
@@ -572,23 +568,6 @@ async function loadDashboard() {
 
         channelTotals[
           platformId
-        ].spend += cost;
-
-        if(!chartMap[tanggal]){
-
-          chartMap[tanggal]={
-            revenue:0,
-            spend:0
-          };
-
-        }
-
-        chartMap[
-          tanggal
-        ].revenue += revenue;
-
-        chartMap[
-          tanggal
         ].spend += cost;
 
       });
@@ -704,7 +683,7 @@ async function loadDashboard() {
 
     const roasProgress = document.getElementById("roasProgress");
 
-    updateAreaChart(chartMap);
+    updateAreaChart(totalSpend, totalRevenue);
     updateDonutChart(channelTotals);
 
     const targetInput = document.getElementById("targetRevenue");
@@ -732,18 +711,11 @@ async function loadDashboard() {
 } 
 
 
-function updateAreaChart(chartMap) {
-  const labels = sortChartLabels(Object.keys(chartMap));
-
-  if (labels.length === 0) {
-    labels.push("-");
-    chartMap["-"] = { revenue: 0, spend: 0 };
-  }
-
+function updateAreaChart(totalSpend, totalRevenue) {
   if (areaChart) {
-    areaChart.data.labels = labels;
-    areaChart.data.datasets[0].data = labels.map(label => chartMap[label].revenue);
-    areaChart.data.datasets[1].data = labels.map(label => chartMap[label].spend);
+    areaChart.data.labels = ["Start", "Total"];
+    areaChart.data.datasets[0].data = [0, totalRevenue];
+    areaChart.data.datasets[1].data = [0, totalSpend];
     areaChart.update();
   }
 }
