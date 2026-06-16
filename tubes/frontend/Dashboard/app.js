@@ -2,20 +2,20 @@ const BASE_URL = "https://camprentelyu.azurewebsites.net/api";
 
 const platformMap = {
   1: "Instagram",
-  2: "Tiktok",
-  3: "Youtube"
+  2: "Youtube",
+  3: "Tiktok"
 };
 
 const badgeClassMap = {
   1: "instagram-badge",
-  2: "tiktok-badge",
-  3: "youtube-badge"
+  2: "youtube-badge",
+  3: "tiktok-badge"
 };
 
 const barClassMap = {
   1: "instagram-bar",
-  2: "tiktok-bar",
-  3: "youtube-bar"
+  2: "youtube-bar",
+  3: "tiktok-bar"
 };
 
 function getVal(obj, keys, fallback = 0) {
@@ -48,6 +48,39 @@ function formatDate(value) {
 
   const dateText = value.toString();
   return dateText.includes("T") ? dateText.split("T")[0] : dateText;
+}
+
+function getNumber(obj, keys, fallback = 0) {
+  const value = Number(getVal(obj, keys, fallback));
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function getPerformanceDate(item) {
+  return formatDate(getVal(
+    item,
+    ["tanggal", "Tanggal", "date", "Date", "createdAt", "CreatedAt"],
+    "-"
+  ));
+}
+
+function sortChartLabels(labels) {
+  return labels.sort((a, b) => {
+    if (a === "-") return 1;
+    if (b === "-") return -1;
+
+    const dateA = new Date(a);
+    const dateB = new Date(b);
+
+    if (!Number.isNaN(dateA.getTime()) && !Number.isNaN(dateB.getTime())) {
+      return dateA - dateB;
+    }
+
+    return a.localeCompare(b);
+  });
+}
+
+function formatRupiah(value) {
+  return `Rp ${Number(value || 0).toLocaleString("id-ID")}`;
 }
 
 const areaCanvas = document.getElementById("areaChart");
@@ -91,6 +124,13 @@ if (areaCanvas) {
       plugins: {
         legend: {
           display: false
+        },
+        tooltip: {
+          callbacks: {
+            label(context) {
+              return `${context.dataset.label}: ${formatRupiah(context.parsed.y)}`;
+            }
+          }
         }
       },
       scales: {
@@ -103,8 +143,22 @@ if (areaCanvas) {
           }
         },
         y: {
+          beginAtZero: true,
           ticks: {
-            color: "#8B8FA8"
+            color: "#8B8FA8",
+            callback(value) {
+              const number = Number(value) || 0;
+
+              if (number >= 1000000) {
+                return `Rp ${(number / 1000000).toFixed(1)}jt`;
+              }
+
+              if (number >= 1000) {
+                return `Rp ${(number / 1000).toFixed(0)}rb`;
+              }
+
+              return `Rp ${number}`;
+            }
           },
           grid: {
             color: "rgba(255,255,255,0.06)"
@@ -362,7 +416,7 @@ async function loadDashboard() {
     document.querySelector(".roas-val").textContent = "0.00x";
     document.querySelector(".donut-center-val").textContent = "0.00x";
 
-    updateAreaChart(0, 0);
+    updateAreaChart({});
     updateDonutChart({
       1: { revenue: 0, spend: 0 },
       2: { revenue: 0, spend: 0 },
@@ -457,7 +511,7 @@ async function loadDashboard() {
       const campaignSpend =
         performance.reduce(
           (sum,item)=>
-            sum + (Number(item.cost)||0),
+            sum + getNumber(item, ["cost", "Cost", "spend", "Spend", "adSpend", "AdSpend"]),
           0
         );
 
@@ -465,7 +519,7 @@ async function loadDashboard() {
       const actualRevenue =
         performance.reduce(
           (sum,item)=>
-            sum + (Number(item.revenue)||0),
+            sum + getNumber(item, ["revenue", "Revenue", "totalRevenue", "TotalRevenue"]),
           0
         );
 
@@ -485,19 +539,19 @@ async function loadDashboard() {
       totalRevenue += actualRevenue;
       totalSpend += campaignSpend;
 
-      console.log(`Campaign: ${campaignName}, Performance items:`, performance.length);
-
       performance.forEach(item=>{
 
-        const revenue =
-          Number(item.revenue)||0;
+        const revenue = getNumber(
+          item,
+          ["revenue", "Revenue", "totalRevenue", "TotalRevenue"]
+        );
 
-        const cost =
-          Number(item.cost)||0;
+        const cost = getNumber(
+          item,
+          ["cost", "Cost", "spend", "Spend", "adSpend", "AdSpend"]
+        );
 
-        const tanggal = item.tanggal || item.Tanggal || "-";
-
-        console.log(`  Item tanggal: ${tanggal}, revenue: ${revenue}, cost: ${cost}`);
+        const tanggal = getPerformanceDate(item);
 
         if(!channelTotals[platformId]){
 
@@ -619,7 +673,7 @@ async function loadDashboard() {
       }
     }
 
-    const labels = Object.keys(chartMap).sort();
+    const labels = sortChartLabels(Object.keys(chartMap));
 
     if (labels.length === 0) {
       labels.push("-");
@@ -660,7 +714,7 @@ async function loadDashboard() {
 
     const roasProgress = document.getElementById("roasProgress");
 
-    updateAreaChart(totalSpend, totalRevenue);
+    updateAreaChart(chartMap);
     updateDonutChart(channelTotals);
 
     const targetInput = document.getElementById("targetRevenue");
@@ -689,7 +743,7 @@ async function loadDashboard() {
 
 
 function updateAreaChart(chartMap) {
-  const labels = Object.keys(chartMap).sort();
+  const labels = sortChartLabels(Object.keys(chartMap));
 
   if (labels.length === 0) {
     labels.push("-");
@@ -726,8 +780,8 @@ function updateDonutChart(channelTotals) {
 
     let color = "#A78BFA";
     if (Number(key) === 1) color = "#FBBF24";
-    else if (Number(key) === 2) color = "#3B82F6";
-    else if (Number(key) === 3) color = "#F87171";
+    else if (Number(key) === 2) color = "#F87171";
+    else if (Number(key) === 3) color = "#3B82F6";
 
     donutColors.push(color);
 
@@ -735,14 +789,14 @@ function updateDonutChart(channelTotals) {
     li.innerHTML = `
       <span class="dot ${
         Number(key) === 1 ? "instagram" :
-        Number(key) === 2 ? "tiktok" :
-        "youtube"
+        Number(key) === 2 ? "youtube" :
+        "tiktok"
       }"></span>
       ${platformMap[key] || "Unknown"}
       <span class="legend-val ${
         Number(key) === 1 ? "instagram-col" :
-        Number(key) === 2 ? "tiktok-col" :
-        "youtube-col"
+        Number(key) === 2 ? "youtube-col" :
+        "tiktok-col"
       }">${roas.toFixed(2)}x</span>
     `;
 
