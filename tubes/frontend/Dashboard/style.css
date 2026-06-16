@@ -469,7 +469,7 @@ body {
   display: inline-block;
 }
 .revenue-dot { background: var(--accent-green); }
-.spend-dot { background: var(--tiktok); }
+.spend-dot { background: #6D5DF6; }
 
 /* TARGET ROAS LIST */
 .target-roas-list {
