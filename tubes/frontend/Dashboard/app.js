@@ -55,17 +55,32 @@ let areaChart = null;
 
 if (areaCanvas) {
   areaChart = new Chart(areaCanvas, {
-    type: "bar",
+    type: "line",
 
     data: {
-      labels: ["Total Spend", "Total Revenue"],
+      labels: [],
       datasets: [
         {
-          label: "Amount",
-          data: [0, 0],
-          backgroundColor: ["#3B82F6", "#34D399"],
-          borderRadius: 8,
-          borderWidth: 0
+          label: "Revenue",
+          data: [],
+          borderColor: "#34D399",
+          backgroundColor: "rgba(52,211,153,0.15)",
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: "Spend",
+          data: [],
+          borderColor: "#3B82F6",
+          backgroundColor: "rgba(59,130,246,0.15)",
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4
         }
       ]
     },
@@ -73,7 +88,6 @@ if (areaCanvas) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      indexAxis: "y",
       plugins: {
         legend: {
           display: false
@@ -674,9 +688,18 @@ async function loadDashboard() {
 } 
 
 
-function updateAreaChart(totalSpend, totalRevenue) {
+function updateAreaChart(chartMap) {
+  const labels = Object.keys(chartMap).sort();
+
+  if (labels.length === 0) {
+    labels.push("-");
+    chartMap["-"] = { revenue: 0, spend: 0 };
+  }
+
   if (areaChart) {
-    areaChart.data.datasets[0].data = [totalSpend, totalRevenue];
+    areaChart.data.labels = labels;
+    areaChart.data.datasets[0].data = labels.map(l => chartMap[l].revenue);
+    areaChart.data.datasets[1].data = labels.map(l => chartMap[l].spend);
     areaChart.update();
   }
 }
