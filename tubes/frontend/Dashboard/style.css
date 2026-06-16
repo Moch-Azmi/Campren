@@ -967,6 +967,20 @@ body {
   gap: 8px;
 }
 
+.completed-action-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(52, 211, 153, 0.14);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  color: var(--accent-green);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .edit-campaign-btn {
   border: none;
   outline: none;

@@ -83,6 +83,26 @@ function formatRupiah(value) {
   return `Rp ${Number(value || 0).toLocaleString("id-ID")}`;
 }
 
+function isPastEndDate(value) {
+  const dateText = formatDate(value);
+
+  if (dateText === "-") {
+    return false;
+  }
+
+  const endDate = new Date(dateText);
+
+  if (Number.isNaN(endDate.getTime())) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
+
+  return endDate < today;
+}
+
 const areaCanvas = document.getElementById("areaChart");
 let areaChart = null;
 
@@ -91,33 +111,29 @@ if (areaCanvas) {
     type: "line",
 
     data: {
-      labels: [],
+      labels: ["Start", "Total"],
       datasets: [
         {
           label: "Revenue",
           data: [],
           borderColor: "#34D399",
-          backgroundColor: "rgba(52,211,153,0.22)",
-          pointBackgroundColor: "#34D399",
-          pointBorderColor: "#34D399",
+          backgroundColor: "rgba(52,211,153,0.15)",
           pointRadius: 2,
-          pointHoverRadius: 5,
+          pointHoverRadius: 4,
           borderWidth: 2,
           fill: true,
-          tension: 0.35
+          tension: 0.4
         },
         {
-          label: "Ad Spend",
+          label: "Spend",
           data: [],
           borderColor: "#6D5DF6",
-          backgroundColor: "rgba(109,93,246,0.22)",
-          pointBackgroundColor: "#6D5DF6",
-          pointBorderColor: "#6D5DF6",
+          backgroundColor: "rgba(109,93,246,0.15)",
           pointRadius: 2,
-          pointHoverRadius: 5,
+          pointHoverRadius: 4,
           borderWidth: 2,
           fill: true,
-          tension: 0.35
+          tension: 0.4
         }
       ]
     },
@@ -433,6 +449,8 @@ async function loadDashboard() {
     let totalRevenue = 0;
     let totalSpend = 0;
 
+    const chartMap = {};
+
     const channelTotals = {
       1: { revenue: 0, spend: 0 },
       2: { revenue: 0, spend: 0 },
@@ -509,11 +527,13 @@ async function loadDashboard() {
         "-"
       ));
 
+      const isCompleted = isPastEndDate(tanggalAkhir);
+
       /* total spend dari cost */
       const campaignSpend =
         performance.reduce(
           (sum,item)=>
-            sum + getNumber(item, ["cost", "Cost", "spend", "Spend", "adSpend", "AdSpend"]),
+            sum + (Number(item.cost)||0),
           0
         );
 
@@ -521,7 +541,7 @@ async function loadDashboard() {
       const actualRevenue =
         performance.reduce(
           (sum,item)=>
-            sum + getNumber(item, ["revenue", "Revenue", "totalRevenue", "TotalRevenue"]),
+            sum + (Number(item.revenue)||0),
           0
         );
 
@@ -541,17 +561,19 @@ async function loadDashboard() {
       totalRevenue += actualRevenue;
       totalSpend += campaignSpend;
 
+      console.log(`Campaign: ${campaignName}, Performance items:`, performance.length);
+
       performance.forEach(item=>{
 
-        const revenue = getNumber(
-          item,
-          ["revenue", "Revenue", "totalRevenue", "TotalRevenue"]
-        );
+        const revenue =
+          Number(item.revenue)||0;
 
-        const cost = getNumber(
-          item,
-          ["cost", "Cost", "spend", "Spend", "adSpend", "AdSpend"]
-        );
+        const cost =
+          Number(item.cost)||0;
+
+        const tanggal = item.tanggal || item.Tanggal || "-";
+
+        console.log(`  Item tanggal: ${tanggal}, revenue: ${revenue}, cost: ${cost}`);
 
         if(!channelTotals[platformId]){
 
@@ -568,6 +590,23 @@ async function loadDashboard() {
 
         channelTotals[
           platformId
+        ].spend += cost;
+
+        if(!chartMap[tanggal]){
+
+          chartMap[tanggal]={
+            revenue:0,
+            spend:0
+          };
+
+        }
+
+        chartMap[
+          tanggal
+        ].revenue += revenue;
+
+        chartMap[
+          tanggal
         ].spend += cost;
 
       });
@@ -609,19 +648,23 @@ async function loadDashboard() {
         </td>
 
         <td>
-        <div class="action-buttons">
-          <button 
-            class="edit-campaign-btn"
-            onclick='openEditModal(${JSON.stringify(campaignInfo).replace(/'/g, "&apos;")}, ${campaignId})'>
-            Edit
-          </button>
+          ${
+            isCompleted
+              ? `<span class="completed-action-label">Completed</span>`
+              : `<div class="action-buttons">
+                  <button 
+                    class="edit-campaign-btn"
+                    onclick='openEditModal(${JSON.stringify(campaignInfo).replace(/'/g, "&apos;")}, ${campaignId})'>
+                    Edit
+                  </button>
 
-          <button 
-            class="delete-campaign-btn"
-            onclick="deleteCampaign(${campaignId})">
-            Delete
-          </button>
-        </div>
+                  <button 
+                    class="delete-campaign-btn"
+                    onclick="deleteCampaign(${campaignId})">
+                    Delete
+                  </button>
+                </div>`
+          }
       </td>
       `;
 
@@ -656,6 +699,19 @@ async function loadDashboard() {
       }
     }
 
+    const labels = Object.keys(chartMap).sort();
+
+    if (labels.length === 0) {
+      labels.push("-");
+      chartMap["-"] = {
+        revenue: 0,
+        spend: 0
+      };
+    }
+
+    const revenueData = labels.map(label => chartMap[label].revenue);
+    const spendData = labels.map(label => chartMap[label].spend);
+
     const spendEl = document.querySelector(".spend-val");
     const revenueEl = document.querySelector(".revenue-val");
     const roasEl = document.querySelector(".roas-val");
@@ -679,6 +735,7 @@ async function loadDashboard() {
       donutCenter.textContent = `${finalRoas.toFixed(2)}x`;
     }
 
+    console.log("Final Chart Data:", chartMap);
     console.log("Total Spend:", totalSpend, "Total Revenue:", totalRevenue);
 
     const roasProgress = document.getElementById("roasProgress");
