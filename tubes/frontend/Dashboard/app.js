@@ -55,32 +55,17 @@ let areaChart = null;
 
 if (areaCanvas) {
   areaChart = new Chart(areaCanvas, {
-    type: "line",
+    type: "bar",
 
     data: {
-      labels: [],
+      labels: ["Total Spend", "Total Revenue"],
       datasets: [
         {
-          label: "Revenue",
-          data: [],
-          borderColor: "#34D399",
-          backgroundColor: "rgba(52,211,153,0.15)",
-          pointRadius: 2,
-          pointHoverRadius: 4,
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: "Spend",
-          data: [],
-          borderColor: "#3B82F6",
-          backgroundColor: "rgba(59,130,246,0.15)",
-          pointRadius: 2,
-          pointHoverRadius: 4,
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4
+          label: "Amount",
+          data: [0, 0],
+          backgroundColor: ["#3B82F6", "#34D399"],
+          borderRadius: 8,
+          borderWidth: 0
         }
       ]
     },
@@ -88,6 +73,7 @@ if (areaCanvas) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      indexAxis: "y",
       plugins: {
         legend: {
           display: false
@@ -362,7 +348,7 @@ async function loadDashboard() {
     document.querySelector(".roas-val").textContent = "0.00x";
     document.querySelector(".donut-center-val").textContent = "0.00x";
 
-    updateAreaChart({});
+    updateAreaChart(0, 0);
     updateDonutChart({
       1: { revenue: 0, spend: 0 },
       2: { revenue: 0, spend: 0 },
@@ -660,7 +646,7 @@ async function loadDashboard() {
 
     const roasProgress = document.getElementById("roasProgress");
 
-    updateAreaChart(chartMap);
+    updateAreaChart(totalSpend, totalRevenue);
     updateDonutChart(channelTotals);
 
     const targetInput = document.getElementById("targetRevenue");
@@ -688,18 +674,9 @@ async function loadDashboard() {
 } 
 
 
-function updateAreaChart(chartMap) {
-  const labels = Object.keys(chartMap).sort();
-
-  if (labels.length === 0) {
-    labels.push("-");
-    chartMap["-"] = { revenue: 0, spend: 0 };
-  }
-
+function updateAreaChart(totalSpend, totalRevenue) {
   if (areaChart) {
-    areaChart.data.labels = labels;
-    areaChart.data.datasets[0].data = labels.map(l => chartMap[l].revenue);
-    areaChart.data.datasets[1].data = labels.map(l => chartMap[l].spend);
+    areaChart.data.datasets[0].data = [totalSpend, totalRevenue];
     areaChart.update();
   }
 }
