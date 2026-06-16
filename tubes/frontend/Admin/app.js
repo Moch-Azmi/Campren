@@ -113,6 +113,14 @@ async function loadAdminDashboard() {
 
         const campaignName = campaignInfo.namaCampaign || campaignInfo.nama_campaign || "Campaign";
         const userId = campaignInfo.userId || campaignInfo.user_id || "-";
+        
+        // Fetch user data to get email
+        let userEmail = "-";
+        if (userId && userId !== "-") {
+          const userData = await safeJsonFetch(`${BASE_URL}/Users/${userId}`);
+          userEmail = userData?.email || userData?.Email || "-";
+        }
+        
         const platformId = campaignInfo.platformId || campaignInfo.platform_id || 1;
         
         const budget = Number(campaignInfo.budget) || 0;
@@ -148,7 +156,7 @@ async function loadAdminDashboard() {
             <div class="camp-sub">Campaign ID : ${campaignId}</div>
           </td>
           <td>
-            <span class="user-id-badge">User ID: ${userId}</span>
+            <span class="user-id-badge">${userEmail}</span>
           </td>
           <td>
             <span class="channel-badge ${badgeClassMap[platformId] || ""}">
