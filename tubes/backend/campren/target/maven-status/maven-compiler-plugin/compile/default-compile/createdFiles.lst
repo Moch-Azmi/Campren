@@ -12,6 +12,7 @@ com\example\repository\PelangganRepository.class
 com\example\controller\UserController.class
 com\example\repository\PerformanceMetricsRepository.class
 com\example\model\Campaign.class
+com\example\interfaces\ROASCalculator.class
 com\example\model\Performance.class
 com\example\model\PerformanceMetrics.class
 com\example\model\Users.class

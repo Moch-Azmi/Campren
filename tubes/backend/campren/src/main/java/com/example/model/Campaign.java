@@ -1,11 +1,12 @@
 package com.example.model;
 
+import com.example.interfaces.ROASCalculator;
 import jakarta.persistence.*;
 import java.sql.Date;
 
 @Entity
 @Table(name="campaigns")
-public class Campaign {
+public class Campaign implements ROASCalculator {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,15 +19,27 @@ public class Campaign {
     private Integer budget;
     private Date tanggalMulai;
     private Date tanggalAkhir;
+
     @Column(name = "targetViews")
     private Long targetViews;
+
     @Column(name = "targetClicks")
     private Long targetClicks;
+
     @Column(name = "targetIncome")
     private Long targetIncome;
 
+    // Constructor kosong (dibutuhkan JPA)
+    public Campaign() {
+    }
+
+    // Getter Setter
     public Integer getCampaignId() {
         return campaignId;
+    }
+
+    public void setCampaignId(Integer campaignId) {
+        this.campaignId = campaignId;
     }
 
     public Integer getUserId() {
@@ -76,7 +89,7 @@ public class Campaign {
     public void setTanggalAkhir(Date tanggalAkhir) {
         this.tanggalAkhir = tanggalAkhir;
     }
-    
+
     public Long getTargetViews() {
         return targetViews;
     }
@@ -84,7 +97,7 @@ public class Campaign {
     public void setTargetViews(Long targetViews) {
         this.targetViews = targetViews;
     }
-    
+
     public Long getTargetClicks() {
         return targetClicks;
     }
@@ -92,12 +105,23 @@ public class Campaign {
     public void setTargetClicks(Long targetClicks) {
         this.targetClicks = targetClicks;
     }
-    
+
     public Long getTargetIncome() {
         return targetIncome;
     }
 
     public void setTargetIncome(Long targetIncome) {
         this.targetIncome = targetIncome;
+    }
+
+    // Implementasi interface sesuai UML
+    @Override
+    public double calculateROAS(double spend, double revenue) {
+
+        if (spend <= 0) {
+            return 0;
+        }
+
+        return revenue / spend;
     }
 }
