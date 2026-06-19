@@ -378,8 +378,6 @@ function collectFormData() {
   return {
     namaCampaign: document.getElementById('namaCampaign').value.trim(),
 
-    namaProduk: document.getElementById('namaProduk').value.trim(),
-
     channel: selectedChannel,
 
     tanggalMulai: tanggalMulaiInput.value,
@@ -401,13 +399,6 @@ function validateForm(data) {
     return {
       valid: false,
       message: 'Nama campaign wajib diisi'
-    };
-  }
-
-  if (!data.namaProduk) {
-    return {
-      valid: false,
-      message: 'Nama produk wajib diisi'
     };
   }
 
