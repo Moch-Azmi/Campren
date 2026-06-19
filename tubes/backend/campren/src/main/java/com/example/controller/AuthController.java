@@ -1,7 +1,9 @@
 package com.example.controller;
 
+import com.example.model.Admin;
 import com.example.model.Pelanggan;
-import com.example.model.Users;
+import com.example.model.UserAccount;
+import com.example.repository.AdminRepository;
 import com.example.repository.PelangganRepository;
 import com.example.repository.UsersRepository;
 
@@ -23,6 +25,9 @@ public class AuthController {
     private PelangganRepository pelangganRepository;
 
     @Autowired
+    private AdminRepository adminRepository;
+
+    @Autowired
     private UsersRepository usersRepository;
 
     // ==========================
@@ -35,7 +40,9 @@ public class AuthController {
         try {
 
             // cek email sudah terdaftar atau belum
-            if (pelangganRepository.existsByEmail(req.getEmail())) {
+            if (pelangganRepository.existsByEmail(req.getEmail())
+                    || adminRepository.existsByEmail(req.getEmail())
+                    || usersRepository.findByEmail(req.getEmail()).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of(
                                 "status", "failed",
@@ -47,7 +54,7 @@ public class AuthController {
             pelangganRepository.save(req);
 
             // simpan ke tabel users
-            Users user = new Users();
+            UserAccount user = new UserAccount();
             user.setRoleId(1); // 1 = Advertiser
             user.setEmail(req.getEmail());
             user.setNama(req.getNama());
@@ -78,27 +85,30 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Pelanggan req) {
 
-        Optional<Pelanggan> pelanggan =
-                pelangganRepository.findByEmail(req.getEmail());
+        Optional<Pelanggan> pelanggan = pelangganRepository.findByEmail(req.getEmail());
+        Optional<Admin> admin = adminRepository.findByEmail(req.getEmail());
 
-        if (pelanggan.isPresent()
-                && pelanggan.get().getPassword().equals(req.getPassword())) {
+        boolean pelangganValid = pelanggan.isPresent()
+                && pelanggan.get().getPassword().equals(req.getPassword());
 
-            Optional<Users> user =
+        boolean adminValid = admin.isPresent()
+                && admin.get().getPassword().equals(req.getPassword());
+
+        if (pelangganValid || adminValid) {
+
+            Optional<UserAccount> user =
                     usersRepository.findByEmail(req.getEmail());
 
-            if (user.isPresent()) {
+            Map<String, Object> response = new HashMap<>();
 
-                Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("userId", user.map(UserAccount::getUserId).orElse(null));
+            response.put("roleId", user.map(UserAccount::getRoleId).orElse(adminValid ? 2 : 1));
+            response.put("email", req.getEmail());
+            response.put("nama", user.map(UserAccount::getNama)
+                    .orElse(adminValid ? admin.get().getNama() : pelanggan.get().getNama()));
 
-                response.put("status", "success");
-                response.put("userId", user.get().getUserId());
-                response.put("roleId", user.get().getRoleId());
-                response.put("email", user.get().getEmail());
-                response.put("nama", user.get().getNama());
-
-                return ResponseEntity.ok(response);
-            }
+            return ResponseEntity.ok(response);
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -116,15 +126,31 @@ public class AuthController {
     public ResponseEntity<?> changePassword(
             @RequestBody Pelanggan req) {
 
-        Optional<Pelanggan> pelanggan =
-                pelangganRepository.findByEmail(req.getEmail());
+        Optional<Pelanggan> pelanggan = pelangganRepository.findByEmail(req.getEmail());
 
         if (pelanggan.isPresent()) {
 
-            Pelanggan user = pelanggan.get();
-            user.setPassword(req.getPassword());
+            Pelanggan pelangganData = pelanggan.get();
+            pelangganData.setPassword(req.getPassword());
 
-            pelangganRepository.save(user);
+            pelangganRepository.save(pelangganData);
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "status", "success",
+                            "message", "Password berhasil diubah"
+                    )
+            );
+        }
+
+        Optional<Admin> admin = adminRepository.findByEmail(req.getEmail());
+
+        if (admin.isPresent()) {
+
+            Admin adminData = admin.get();
+            adminData.setPassword(req.getPassword());
+
+            adminRepository.save(adminData);
 
             return ResponseEntity.ok(
                     Map.of(

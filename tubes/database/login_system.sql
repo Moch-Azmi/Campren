@@ -67,6 +67,25 @@ INSERT INTO `pelanggan` (`email`, `nama`, `password`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `admin`
+--
+
+CREATE TABLE `admin` (
+  `email` varchar(255) NOT NULL,
+  `nama` varchar(255) DEFAULT NULL,
+  `password` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `admin`
+--
+
+INSERT INTO `admin` (`email`, `nama`, `password`) VALUES
+('admin@campren.com', 'Admin CAMPREN', 'Admin123');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `performance_metrics`
 --
 
@@ -168,7 +187,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `role_id`, `email`, `nama`) VALUES
-(3, 1, 'darrenuhuyyyy@gmail.com', 'Darren Kecee');
+(3, 1, 'darrenuhuyyyy@gmail.com', 'Darren Kecee'),
+(4, 2, 'admin@campren.com', 'Admin CAMPREN');
 
 --
 -- Indexes for dumped tables
@@ -186,6 +206,12 @@ ALTER TABLE `campaigns`
 -- Indexes for table `pelanggan`
 --
 ALTER TABLE `pelanggan`
+  ADD PRIMARY KEY (`email`);
+
+--
+-- Indexes for table `admin`
+--
+ALTER TABLE `admin`
   ADD PRIMARY KEY (`email`);
 
 --
@@ -267,7 +293,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `user_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Constraints for dumped tables
@@ -297,7 +323,6 @@ ALTER TABLE `role_permissions`
 -- Constraints for table `users`
 --
 ALTER TABLE `users`
-  ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`email`) REFERENCES `pelanggan` (`email`),
   ADD CONSTRAINT `users_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`);
 COMMIT;
 

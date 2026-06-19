@@ -1,6 +1,6 @@
 package com.example.controller;
 
-import com.example.model.Users;
+import com.example.model.UserAccount;
 import com.example.repository.UsersRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ public class UserController {
     @GetMapping
     public ResponseEntity<?> getAllUsers() {
 
-        List<Users> users = usersRepository.findAll();
+        List<UserAccount> users = usersRepository.findAll();
 
         return ResponseEntity.ok(users);
     }
@@ -38,7 +38,7 @@ public class UserController {
     public ResponseEntity<?> getUserById(
             @PathVariable Integer userId) {
 
-        Optional<Users> user =
+        Optional<UserAccount> user =
                 usersRepository.findById(userId);
 
         if (user.isPresent()) {
@@ -60,7 +60,7 @@ public class UserController {
     public ResponseEntity<?> getUserByEmail(
             @PathVariable String email) {
 
-        Optional<Users> user =
+        Optional<UserAccount> user =
                 usersRepository.findByEmail(email);
 
         if (user.isPresent()) {
@@ -81,9 +81,9 @@ public class UserController {
     @PutMapping("/{userId}")
     public ResponseEntity<?> updateUser(
             @PathVariable Integer userId,
-            @RequestBody Users updatedUser) {
+            @RequestBody UserAccount updatedUser) {
 
-        Optional<Users> userOpt =
+        Optional<UserAccount> userOpt =
                 usersRepository.findById(userId);
 
         if (userOpt.isEmpty()) {
@@ -95,7 +95,7 @@ public class UserController {
                     ));
         }
 
-        Users user = userOpt.get();
+        UserAccount user = userOpt.get();
 
         user.setNama(updatedUser.getNama());
         user.setEmail(updatedUser.getEmail());
@@ -120,7 +120,7 @@ public class UserController {
     public ResponseEntity<?> deleteUser(
             @PathVariable Integer userId) {
 
-        Optional<Users> user =
+        Optional<UserAccount> user =
                 usersRepository.findById(userId);
 
         if (user.isEmpty()) {

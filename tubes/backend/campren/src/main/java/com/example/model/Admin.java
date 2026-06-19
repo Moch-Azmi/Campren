@@ -3,10 +3,19 @@ package com.example.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "pelanggan")
-public class Pelanggan extends Users {
+@Table(name = "admin")
+public class Admin extends Users {
 
     private String password;
+
+    public Admin() {
+    }
+
+    public Admin(String email, String nama, String password) {
+        setEmail(email);
+        setNama(nama);
+        this.password = password;
+    }
 
     @Override
     @Id
