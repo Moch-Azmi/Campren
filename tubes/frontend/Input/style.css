@@ -742,6 +742,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   gap: 24px;
 }
 
+.form-row.channel-row {
+  grid-template-columns: 1fr;
+}
+
 /* =========================
    LABEL
 ========================= */
