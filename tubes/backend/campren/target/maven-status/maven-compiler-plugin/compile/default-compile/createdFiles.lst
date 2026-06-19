@@ -1,5 +1,6 @@
 com\example\LoginappApplication.class
 com\example\controller\AuthController.class
+com\example\model\Admin.class
 com\example\controller\MetricsController.class
 com\example\repository\UsersRepository.class
 com\example\config\SecurityConfig.class
@@ -12,5 +13,7 @@ com\example\controller\UserController.class
 com\example\repository\PerformanceMetricsRepository.class
 com\example\model\Campaign.class
 com\example\interfaces\ROASCalculator.class
+com\example\model\UserAccount.class
 com\example\model\PerformanceMetrics.class
+com\example\repository\AdminRepository.class
 com\example\model\Users.class

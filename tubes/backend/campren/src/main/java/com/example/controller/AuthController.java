@@ -10,6 +10,8 @@ import com.example.repository.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -21,6 +23,8 @@ import java.util.Optional;
 @CrossOrigin(origins = "*")
 public class AuthController {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
     @Autowired
     private PelangganRepository pelangganRepository;
 
@@ -30,6 +34,14 @@ public class AuthController {
     @Autowired
     private UsersRepository usersRepository;
 
+    private String normalizeEmail(String email) {
+        return email == null ? "" : email.trim();
+    }
+
+    private boolean passwordMatches(String savedPassword, String inputPassword) {
+        return savedPassword != null && savedPassword.equals(inputPassword);
+    }
+
     // ==========================
     // REGISTER
     // POST : /api/auth/register
@@ -38,11 +50,13 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody Pelanggan req) {
 
         try {
+            String email = normalizeEmail(req.getEmail());
+            req.setEmail(email);
 
             // cek email sudah terdaftar atau belum
-            if (pelangganRepository.existsByEmail(req.getEmail())
-                    || adminRepository.existsByEmail(req.getEmail())
-                    || usersRepository.findByEmail(req.getEmail()).isPresent()) {
+            if (pelangganRepository.existsByEmailIgnoreCase(email)
+                    || adminRepository.existsByEmailIgnoreCase(email)
+                    || usersRepository.findByEmailIgnoreCase(email).isPresent()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of(
                                 "status", "failed",
@@ -56,7 +70,7 @@ public class AuthController {
             // simpan ke tabel users
             UserAccount user = new UserAccount();
             user.setRoleId(1); // 1 = Advertiser
-            user.setEmail(req.getEmail());
+            user.setEmail(email);
             user.setNama(req.getNama());
 
             usersRepository.save(user);
@@ -85,26 +99,49 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Pelanggan req) {
 
-        Optional<Pelanggan> pelanggan = pelangganRepository.findByEmail(req.getEmail());
-        Optional<Admin> admin = adminRepository.findByEmail(req.getEmail());
+        String email = normalizeEmail(req.getEmail());
+        String password = req.getPassword();
+
+        Optional<UserAccount> user = usersRepository.findByEmailIgnoreCase(email);
+        Optional<Pelanggan> pelanggan = pelangganRepository.findByEmailIgnoreCase(email);
+        Optional<Admin> admin = adminRepository.findByEmailIgnoreCase(email);
 
         boolean pelangganValid = pelanggan.isPresent()
-                && pelanggan.get().getPassword().equals(req.getPassword());
+                && passwordMatches(pelanggan.get().getPassword(), password);
 
         boolean adminValid = admin.isPresent()
-                && admin.get().getPassword().equals(req.getPassword());
+                && passwordMatches(admin.get().getPassword(), password);
 
-        if (pelangganValid || adminValid) {
+        logger.info(
+                "Login check email={}, userFound={}, roleId={}, pelangganFound={}, adminFound={}, pelangganPasswordMatch={}, adminPasswordMatch={}",
+                email,
+                user.isPresent(),
+                user.map(UserAccount::getRoleId).orElse(null),
+                pelanggan.isPresent(),
+                admin.isPresent(),
+                pelangganValid,
+                adminValid
+        );
 
-            Optional<UserAccount> user =
-                    usersRepository.findByEmail(req.getEmail());
+        boolean loginValid = false;
+        Integer roleId = user.map(UserAccount::getRoleId).orElse(null);
+
+        if (roleId != null && roleId == 2) {
+            loginValid = adminValid;
+        } else if (roleId != null && roleId == 1) {
+            loginValid = pelangganValid;
+        } else {
+            loginValid = pelangganValid || adminValid;
+        }
+
+        if (loginValid) {
 
             Map<String, Object> response = new HashMap<>();
 
             response.put("status", "success");
             response.put("userId", user.map(UserAccount::getUserId).orElse(null));
             response.put("roleId", user.map(UserAccount::getRoleId).orElse(adminValid ? 2 : 1));
-            response.put("email", req.getEmail());
+            response.put("email", email);
             response.put("nama", user.map(UserAccount::getNama)
                     .orElse(adminValid ? admin.get().getNama() : pelanggan.get().getNama()));
 
@@ -126,7 +163,9 @@ public class AuthController {
     public ResponseEntity<?> changePassword(
             @RequestBody Pelanggan req) {
 
-        Optional<Pelanggan> pelanggan = pelangganRepository.findByEmail(req.getEmail());
+        String email = normalizeEmail(req.getEmail());
+
+        Optional<Pelanggan> pelanggan = pelangganRepository.findByEmailIgnoreCase(email);
 
         if (pelanggan.isPresent()) {
 
@@ -143,7 +182,7 @@ public class AuthController {
             );
         }
 
-        Optional<Admin> admin = adminRepository.findByEmail(req.getEmail());
+        Optional<Admin> admin = adminRepository.findByEmailIgnoreCase(email);
 
         if (admin.isPresent()) {
 
