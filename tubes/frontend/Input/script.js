@@ -284,6 +284,10 @@ async function saveCampaign() {
 
   try {
     userData = JSON.parse(localStorage.getItem("user") || "{}");
+    setTimeout(() => {
+      window.location.href = "../Dashboard/index.html";
+    }, 900);
+
   } catch (error) {
     console.error("Data user tidak valid:", error);
     showToast("Data login tidak valid. Silakan login ulang.", "error");
