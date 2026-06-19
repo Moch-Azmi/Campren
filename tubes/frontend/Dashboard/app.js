@@ -298,7 +298,7 @@ async function confirmDeleteCampaign() {
 
   try {
     const response = await fetch(
-      `https://camprentelyu.azurewebsites.net/api/campaign/${campaignId}`,
+      `${BASE_URL}/campaigns/${campaignId}`,
       {
         method: "DELETE"
       }
@@ -379,7 +379,7 @@ async function confirmEditCampaign() {
   };
 
   try {
-    const response = await fetch(`${BASE_URL}/campaign/${selectedEditCampaignId}`, {
+    const response = await fetch(`${BASE_URL}/campaigns/${selectedEditCampaignId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json"
@@ -414,7 +414,7 @@ async function loadDashboard() {
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
 
     const campaignListResult = await safeJsonFetch(
-      `${BASE_URL}/GetUserCampaigns/${userId}`
+      `${BASE_URL}/campaigns/user/${userId}`
     );
 
     const campaigns = normalizeArray(campaignListResult);
@@ -473,11 +473,11 @@ async function loadDashboard() {
       if (!campaignId) continue;
 
       const perfData = await safeJsonFetch(
-        `${BASE_URL}/PerformanceReport/${campaignId}`
+        `${BASE_URL}/reports/${campaignId}`
       );
 
       const roasData =
-        (await safeJsonFetch(`${BASE_URL}/roas/${campaignId}`)) || {};
+        (await safeJsonFetch(`${BASE_URL}/metrics/${campaignId}`)) || {};
 
       const campaignInfo =
         perfData?.campaign || campaignItem || {};

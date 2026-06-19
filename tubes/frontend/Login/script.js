@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             const res = await fetch(
-                "https://camprentelyu.azurewebsites.net/api/login",
+                "https://camprentelyu.azurewebsites.net/api/auth/login",
                 {
                     method: "POST",
                     headers: {
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             console.log("LOGIN:", result);
 
-            if (res.ok && result.status === "registered") {
+            if (res.ok && result.status === "success") {
                 const responseRoleId = Number(result.roleId);
                 const targetRoleNum = Number(selectedRole);
 

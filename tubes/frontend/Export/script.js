@@ -66,7 +66,7 @@ async function loadReportData() {
     throw new Error("User belum login");
   }
 
-  const campaigns = await fetchJson(`${BASE_URL}/GetUserCampaigns/${userId}`);
+  const campaigns = await fetchJson(`${BASE_URL}/campaigns/user/${userId}`);
 
   const result = [];
 
@@ -76,7 +76,7 @@ async function loadReportData() {
     if (!campaignId) continue;
 
     try {
-      const report = await fetchJson(`${BASE_URL}/PerformanceReport/${campaignId}`);
+      const report = await fetchJson(`${BASE_URL}/reports/${campaignId}`);
       const campaign = report.campaign;
       const performance = report.performance || [];
 
@@ -107,7 +107,7 @@ async function loadReportData() {
     let cpc = clicks > 0 ? spend / clicks : 0;
 
     try {
-      const metrics = await fetchJson(`${BASE_URL}/roas/${campaignId}`);
+      const metrics = await fetchJson(`${BASE_URL}/metrics/${campaignId}`);
 
       console.log(`METRICS ${campaignId}:`, metrics);
 

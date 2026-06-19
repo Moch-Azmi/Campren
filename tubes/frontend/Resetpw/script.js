@@ -258,7 +258,7 @@ $('submitBtn').addEventListener('click', (e) => {
   btn.disabled = true;
   btn.querySelector('.btn-label').textContent = 'Processing...';
 
-  fetch("https://camprentelyu.azurewebsites.net/api/change-password", {
+  fetch("https://camprentelyu.azurewebsites.net/api/auth/change-password", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json"
@@ -269,23 +269,30 @@ $('submitBtn').addEventListener('click', (e) => {
     })
   })
   .then(async response => {
-    const result = await response.text();
+    const text = await response.text();
+    let result = {};
+
+    try {
+      result = text ? JSON.parse(text) : {};
+    } catch {
+      result = { message: text };
+    }
 
     console.log("STATUS:", response.status);
     console.log("BODY:", result);
 
     btn.disabled = false;
 
-    const clean = result.trim().toLowerCase();
+    const message = (result.message || "").toLowerCase();
 
-    if (response.status === 404 || clean.includes("email not found")) {
+    if (response.status === 404 || message.includes("email tidak ditemukan")) {
       btn.querySelector('.btn-label').textContent = 'Make a new password';
       setErr(emailInput, '✗ Email tidak ditemukan', emailHint);
       shake(emailInput);
       return;
     }
 
-    if (response.ok && clean.includes("success")) {
+    if (response.ok && result.status === "success") {
     btn.querySelector('.btn-label').textContent = 'Password berhasil diubah ✓';
 
     btn.style.background = 'var(--green)';
@@ -305,7 +312,7 @@ $('submitBtn').addEventListener('click', (e) => {
   }
 
     btn.querySelector('.btn-label').textContent = 'Make a new password';
-    alert("Gagal mengubah password: " + result);
+    alert("Gagal mengubah password: " + (result.message || text));
   })
   .catch(error => {
     btn.disabled = false;

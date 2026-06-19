@@ -80,7 +80,7 @@ async function loadAdminDashboard() {
 
   try {
     // 1. Fetch all campaign IDs
-    const allCampaignsRaw = await safeJsonFetch(`${BASE_URL}/GetAllCampaigns`);
+    const allCampaignsRaw = await safeJsonFetch(`${BASE_URL}/campaigns`);
     const campaignsList = normalizeArray(allCampaignsRaw);
     console.log("All Campaigns List:", campaignsList);
 
@@ -105,8 +105,8 @@ async function loadAdminDashboard() {
       if (!campaignId) continue;
 
       try {
-        const perfData = await safeJsonFetch(`${BASE_URL}/PerformanceReport/${campaignId}`);
-        const roasData = await safeJsonFetch(`${BASE_URL}/roas/${campaignId}`) || {};
+        const perfData = await safeJsonFetch(`${BASE_URL}/reports/${campaignId}`);
+        const roasData = await safeJsonFetch(`${BASE_URL}/metrics/${campaignId}`) || {};
         
         const campaignInfo = perfData?.campaign || item || {};
         const performance = normalizeArray(perfData?.performance || perfData);

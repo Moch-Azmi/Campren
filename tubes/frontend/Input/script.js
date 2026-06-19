@@ -324,7 +324,7 @@ async function saveCampaign() {
   try {
 
     const response = await fetch(
-      'https://camprentelyu.azurewebsites.net/api/campaign',
+      'https://camprentelyu.azurewebsites.net/api/campaigns',
       {
         method: 'POST',
 
@@ -336,11 +336,10 @@ async function saveCampaign() {
       }
     );
 
-    // ambil response text/json
-    const result = await response.text();
+    const result = await response.json();
 
-    if (!response.ok || result.trim().toLowerCase() !== "campaign created") {
-      throw new Error(result || `HTTP ${response.status}`);
+    if (!response.ok || result.status !== "success") {
+      throw new Error(result.message || `HTTP ${response.status}`);
     }
 
     console.log('SUCCESS:', result);

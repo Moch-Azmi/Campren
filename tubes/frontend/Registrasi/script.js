@@ -91,7 +91,7 @@ signupBtn.addEventListener('click', () => {
   btnText.textContent = "Loading...";
   btnLoader.classList.add('show');
 
-  fetch("https://camprentelyu.azurewebsites.net/api/register", {
+  fetch("https://camprentelyu.azurewebsites.net/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -100,21 +100,21 @@ signupBtn.addEventListener('click', () => {
       password: pass
     })
   })
-  .then(res => res.text())
+  .then(res => res.json())
   .then(result => {
 
     signupBtn.disabled = false;
     btnLoader.classList.remove('show');
     btnText.textContent = "Sign Up";
 
-    if (result === "registered") {
+    if (result.status === "success") {
       btnText.textContent = "Success ✓";
 
       setTimeout(() => {
         window.location.href = "../Login/index.html";
       }, 1200);
 
-    } else if (result === "email exists") {
+    } else if ((result.message || "").toLowerCase().includes("email")) {
       showError(emailInput,'email-error','Email sudah terdaftar');
     } else {
       alert("Signup gagal");
